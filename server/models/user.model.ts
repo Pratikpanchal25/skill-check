@@ -5,6 +5,8 @@ const UserSchema = new Schema(
         email: { type: String, required: true, unique: true },
         name: { type: String },
         role: { type: String, enum: ["student", "engineer"], default: "student" },
+        password: { type: String },
+        token: { type: String },
     },
     { timestamps: true }
 );
