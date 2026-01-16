@@ -1,7 +1,6 @@
 import { Judgement } from "../models/judgement.model";
 import { UserAnswer } from "../models/user.answer.model";
 import { SkillCheckSession } from "../models/skill.check.session.model";
-import { VoiceMetrics } from "../models/voice.metrics.model";
 import { evaluateAnswer } from "./llm.service";
 
 export const evaluateSession = async (sessionId: string) => {
