@@ -16,7 +16,8 @@ export const evaluateAnswer = async (
     answerText: string,
     skillName: string
 ): Promise<EvaluationResult> => {
-    const prompt = `
+    try {
+        const prompt = `
 You are a senior technical interviewer.
 
 Evaluate the user's answer strictly for the skill: "${skillName}".
@@ -46,21 +47,32 @@ ${answerText}
 """
 `;
 
-    const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-        },
-    });
+        const result = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+            },
+        });
 
-    const evaluation = JSON.parse(result.text || "{}");
+        const evaluation = JSON.parse(result.text || "{}");
 
-    return {
-        clarity: Math.min(10, Math.max(0, evaluation.clarity)),
-        correctness: Math.min(10, Math.max(0, evaluation.correctness)),
-        depth: Math.min(10, Math.max(0, evaluation.depth)),
-        missingConcepts: evaluation.missingConcepts ?? [],
-        reaction: evaluation.reaction ?? "neutral",
-    };
+        return {
+            clarity: Math.min(10, Math.max(0, Number(evaluation.clarity) || 0)),
+            correctness: Math.min(10, Math.max(0, Number(evaluation.correctness) || 0)),
+            depth: Math.min(10, Math.max(0, Number(evaluation.depth) || 0)),
+            missingConcepts: evaluation.missingConcepts ?? [],
+            reaction: evaluation.reaction ?? "neutral",
+        };
+    } catch (error) {
+        console.error("LLM Evaluation Error:", error);
+        // Return a neutral fallback instead of failing
+        return {
+            clarity: 0,
+            correctness: 0,
+            depth: 0,
+            missingConcepts: ["Service temporarily unavailable"],
+            reaction: "neutral",
+        };
+    }
 };

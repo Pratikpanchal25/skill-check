@@ -32,7 +32,7 @@ export const evaluateSession = async (sessionId: string) => {
         depth: aiResult.depth,
         missingConcepts: aiResult.missingConcepts,
         reaction: aiResult.reaction,
-        modelVersion: "gpt-4-preview" // Update with actual version
+        modelVersion: "gemini-2.0-flash" // Update with actual version
     });
 
     return await evaluation.save();
