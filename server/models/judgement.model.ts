@@ -16,6 +16,8 @@ const JudgementSchema = new Schema(
             enum: ["impressed", "neutral", "confused", "skeptical"],
         },
         modelVersion: { type: String },
+        feedback: String,
+        improvementSuggestions: [String],
     },
     { timestamps: true }
 );

@@ -33,21 +33,20 @@ export interface CatchResponse {
 export type CombinedResponseType = Response<SuccessResponse | ErrorResponse | CatchResponse>
 
 // Typed Request Helpers
-export interface TypedRequestWithBody<T> extends Request {
-    body: T
+export interface TypedRequestWithBody<T> extends Request<any, any, T> {
 }
 
-export interface TypedRequestWithParams<T> extends Request {
-    params: T
+export interface TypedRequestWithParams<T> extends Request<T> {
 }
 
-export interface TypedRequestWithQuery<T> extends Request {
-    query: T
+export interface TypedRequestWithQuery<T> extends Request<any, any, any, T> {
 }
 
-export interface TypedRequestWithParamsAndBody<P, B> extends Request {
-    params: P
-    body: B
+export interface TypedRequestWithParamsAndBody<P, B> extends Request<P, any, B> {
+}
+
+export interface AuthRequest extends Request {
+    user?: any;
 }
 
 // Request Body Interfaces for User endpoints
@@ -72,7 +71,9 @@ export interface UpdateUserRequestBody {
 export interface CreateSessionRequestBody {
     userId: string
     skillId: string
-    mode: "explain-to-prove" | "voice-demo"
+    mode: "explain" | "drill" | "blind"
+    inputType: "voice" | "text"
+    difficulty: "beginner" | "intermediate" | "advanced"
 }
 
 export interface SubmitAnswerRequestBody {
@@ -92,4 +93,10 @@ export interface SessionIdParams {
 
 export interface UserIdQuery {
     userId?: string
+}
+
+// Request Body Interfaces for Skill endpoints
+export interface CreateSkillRequestBody {
+    name: string
+    category: "backend" | "frontend" | "system" | "dsa"
 }

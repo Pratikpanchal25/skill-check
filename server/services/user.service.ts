@@ -1,5 +1,5 @@
 import { User } from "../models/user.model";
-import { SkillCheckSession } from "../models/skill.check.model";
+import { SkillCheckSession } from "../models/skill.check.session.model";
 import { Judgement } from "../models/judgement.model";
 import mongoose from "mongoose";
 

@@ -1,35 +1,99 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthLayout } from './components/layout/AuthLayout';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
+import { Dashboard } from './pages/Dashboard';
+import { SkillCheck } from './pages/SkillCheck';
+import { SkillSession } from './pages/SkillSession';
+import { ThemeProvider } from './components/theme-provider';
 
-function App() {
-  const [count, setCount] = useState(0)
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { store, RootState } from '@/store';
+import { setUser, logout } from './store/slices/authSlice';
+import api from './lib/api';
+
+import { Toaster } from '@/components/ui/sonner';
+import { Loader2 } from 'lucide-react';
+
+function AppContent() {
+  const dispatch = useDispatch();
+  const token = useSelector((state: RootState) => state.auth.token);
+  const [initializing, setInitializing] = useState(!!token);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      if (token) {
+        try {
+          const res = await api.get('/users/me');
+          if (res.data.success) {
+            dispatch(setUser(res.data.data.user || res.data.user));
+          } else {
+            dispatch(logout());
+          }
+        } catch (error) {
+          console.error('Failed to fetch user', error);
+          dispatch(logout());
+        }
+      }
+      setInitializing(false);
+    };
+
+    initAuth();
+  }, [token, dispatch]);
+
+  if (initializing) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+          <p className="text-slate-500 font-medium">Initializing session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        {/* Auth routes */}
+        <Route path="/" element={<AuthLayout />}>
+          <Route index element={<Navigate to="/login" replace />} />
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+        </Route>
+
+        {/* Dashboard routes */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="skillcheck" element={<SkillCheck />} />
+          <Route path="session/:id" element={<SkillSession />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+function App() {
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="skillcheck-theme" attribute="class">
+      <Provider store={store}>
+        <AppContent />
+      </Provider>
+      <Toaster
+        position="top-right"
+        richColors
+        toastOptions={{
+          className:
+            "rounded-xl border backdrop-blur-md shadow-lg",
+        }}
+      />
+    </ThemeProvider>
+  );
+}
+
+export default App;

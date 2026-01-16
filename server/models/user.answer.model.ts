@@ -9,7 +9,7 @@ const UserAnswerSchema = new Schema(
         },
         rawText: { type: String, required: true },
         transcript: { type: String },
-        duration: { type: Number }, // seconds
+        duration: { type: Number },
     },
     { timestamps: true }
 );

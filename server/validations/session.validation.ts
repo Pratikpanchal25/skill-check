@@ -7,9 +7,17 @@ export const createSessionSchema = Joi.object({
     skillId: Joi.string().required().messages({
         'any.required': 'Skill ID is required'
     }),
-    mode: Joi.string().valid('explain-to-prove', 'voice-demo').required().messages({
-        'any.only': 'Mode must be either "explain-to-prove" or "voice-demo"',
+    mode: Joi.string().valid('explain', 'drill', 'blind').required().messages({
+        'any.only': 'Mode must be one of: explain, drill, blind',
         'any.required': 'Mode is required'
+    }),
+    inputType: Joi.string().valid('voice', 'text').required().messages({
+        'any.only': 'Input type must be either "voice" or "text"',
+        'any.required': 'Input type is required'
+    }),
+    difficulty: Joi.string().valid('beginner', 'intermediate', 'advanced').required().messages({
+        'any.only': 'Difficulty must be one of: beginner, intermediate, advanced',
+        'any.required': 'Difficulty is required'
     })
 })
 

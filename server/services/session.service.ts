@@ -1,43 +1,73 @@
-import { SkillCheckSession } from "../models/skill.check.model";
+import { SkillCheckSession } from "../models/skill.check.session.model";
 import { UserAnswer } from "../models/user.answer.model";
-import { Judgement } from "../models/judgement.model";
 import { VoiceMetrics } from "../models/voice.metrics.model";
+import { Judgement } from "../models/judgement.model";
 
-export const createSession = async (sessionData: any) => {
+interface CreateSessionData {
+    userId: string;
+    skillId: string;
+    mode: "explain" | "drill" | "blind";
+    inputType: "voice" | "text";
+}
+
+export const createSession = async (sessionData: CreateSessionData) => {
     const session = new SkillCheckSession(sessionData);
     return await session.save();
 };
 
-export const submitAnswer = async (sessionId: string, answerData: any) => {
-    const answer = new UserAnswer({ sessionId, ...answerData });
+interface SubmitAnswerData {
+    rawText: string;
+    transcript?: string;
+    audioUrl?: string;
+    duration?: number;
+    voiceMetrics?: {
+        wpm?: number;
+        fillerWords?: number;
+        longPauses?: number;
+    };
+}
+
+export const submitAnswer = async (sessionId: string, answerData: SubmitAnswerData) => {
+    // Check if answer already exists for this session
+    const existingAnswer = await UserAnswer.findOne({ sessionId });
+    if (existingAnswer) {
+        throw new Error("Answer already exists for this session");
+    }
+
+    const answer = new UserAnswer({
+        sessionId,
+        rawText: answerData.rawText,
+        transcript: answerData.transcript,
+        duration: answerData.duration
+    });
     await answer.save();
 
+    // Only create voice metrics if voiceMetrics are provided and session is voice type
     if (answerData.voiceMetrics) {
-        const metrics = new VoiceMetrics({ sessionId, ...answerData.voiceMetrics });
-        await metrics.save();
+        const session = await SkillCheckSession.findById(sessionId);
+        if (session && session.inputType === "voice") {
+            const metrics = new VoiceMetrics({
+                sessionId,
+                wpm: answerData.voiceMetrics.wpm,
+                fillerWords: answerData.voiceMetrics.fillerWords,
+                longPauses: answerData.voiceMetrics.longPauses
+            });
+            await metrics.save();
+        }
     }
 
     return answer;
 };
 
-export const evaluateSession = async (sessionId: string) => {
-    const answer = await UserAnswer.findOne({ sessionId });
-    if (!answer) throw new Error("No answer found for this session");
+// Evaluation logic moved to evaluation.service.ts
 
-    // TODO: AI Evaluation logic
-    // const aiResult = await callAI(answer.rawText);
-
-    const evaluation = new Judgement({
-        sessionId,
-        clarity: 8, // Placeholder
-        correctness: 7, // Placeholder
-        depth: 6, // Placeholder
-        missingConcepts: ["Concept A", "Concept B"], // Placeholder
-        reaction: "neutral",
-        modelVersion: "gpt-4-preview"
-    });
-
-    return await evaluation.save();
+export const getSessionById = async (sessionId: string) => {
+    const session = await SkillCheckSession.findById(sessionId)
+        .populate("skillId")
+        .populate("userId")
+        .lean();
+    if (!session) throw new Error("Session not found");
+    return session;
 };
 
 export const getSessionSummary = async (sessionId: string) => {

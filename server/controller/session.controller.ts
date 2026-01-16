@@ -3,13 +3,14 @@ import {
     TypedRequestWithParams,
     TypedRequestWithParamsAndBody,
     CombinedResponseType,
+    AuthRequest,
     CreateSessionRequestBody,
     SubmitAnswerRequestBody,
     SessionIdParams,
     HTTP_BAD_REQUEST_400,
     HTTP_NOT_FOUND_404,
     HTTP_CREATED_201
-} from "../types/index.d"
+} from "../types/index"
 import {
     successResponse,
     errorResponse,
@@ -17,9 +18,10 @@ import {
     catchResponse
 } from "../utils/index"
 import { createSessionSchema, submitAnswerSchema, sessionIdSchema } from "../validations/session.validation"
-import * as SessionService from "../services/session.service"
+import * as SessionService from "../services/session.service";
 
-export async function createSession(req: TypedRequestWithBody<CreateSessionRequestBody>, res: CombinedResponseType): Promise<void> {
+
+export async function createSession(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
         const { error, value } = createSessionSchema.validate(req.body)
         if (error) {
@@ -27,6 +29,14 @@ export async function createSession(req: TypedRequestWithBody<CreateSessionReque
             errorResponseWithStatusCode(res, errorMessage, HTTP_BAD_REQUEST_400)
             return
         }
+
+        if (!req.user?._id) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
+
+        // Override userId from body with authenticated userId for security
+        value.userId = req.user._id.toString()
 
         const session = await SessionService.createSession(value)
 
@@ -43,8 +53,12 @@ export async function createSession(req: TypedRequestWithBody<CreateSessionReque
     }
 }
 
-export async function submitAnswer(req: TypedRequestWithParamsAndBody<SessionIdParams, SubmitAnswerRequestBody>, res: CombinedResponseType): Promise<void> {
+export async function submitAnswer(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
+        if (!req.user?._id) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
         // Validate params
         const paramsValidation = sessionIdSchema.validate(req.params)
         if (paramsValidation.error) {
@@ -79,8 +93,14 @@ export async function submitAnswer(req: TypedRequestWithParamsAndBody<SessionIdP
     }
 }
 
-export async function evaluateSession(req: TypedRequestWithParams<SessionIdParams>, res: CombinedResponseType): Promise<void> {
+
+
+export async function getSessionById(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
+        if (!req.user?._id) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
         const { error, value } = sessionIdSchema.validate(req.params)
         if (error) {
             const errorMessage = error.details[0].message
@@ -90,23 +110,31 @@ export async function evaluateSession(req: TypedRequestWithParams<SessionIdParam
 
         const { id } = value
 
-        const evaluation = await SessionService.evaluateSession(id)
+        const session = await SessionService.getSessionById(id)
 
         const data = {
             success: true,
-            evaluation
+            session
         }
 
-        successResponse(res, data, 'Session evaluated successfully')
+        successResponse(res, data, 'Session retrieved successfully')
         return
     } catch (error) {
-        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to evaluate session')
+        if ((error as Error).message === "Session not found") {
+            errorResponseWithStatusCode(res, 'Session not found', HTTP_NOT_FOUND_404)
+            return
+        }
+        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to retrieve session')
         return
     }
 }
 
-export async function getSessionSummary(req: TypedRequestWithParams<SessionIdParams>, res: CombinedResponseType): Promise<void> {
+export async function getSessionSummary(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
+        if (!req.user?._id) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
         const { error, value } = sessionIdSchema.validate(req.params)
         if (error) {
             const errorMessage = error.details[0].message

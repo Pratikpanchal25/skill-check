@@ -1,7 +1,9 @@
+import { Response } from "express"
 import {
     TypedRequestWithBody,
     TypedRequestWithQuery,
     CombinedResponseType,
+    AuthRequest,
     CreateUserRequestBody,
     LoginRequestBody,
     UpdateUserRequestBody,
@@ -10,7 +12,7 @@ import {
     HTTP_NOT_IMPLEMENTED_501,
     HTTP_INTERNAL_SERVER_ERROR_500,
     HTTP_CREATED_201
-} from "../types/index.d"
+} from "../types/index"
 import {
     successResponse,
     errorResponse,
@@ -125,37 +127,35 @@ export async function login(req: TypedRequestWithBody<LoginRequestBody>, res: Co
     }
 }
 
-export async function getMe(req: TypedRequestWithQuery<UserIdQuery>, res: CombinedResponseType): Promise<void> {
+export async function getMe(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
-        // Note: In production, this would use req.user from auth middleware
-        // For now, using userId from query as placeholder
-        const { userId } = req.query
+        const currentUser = req.user
 
-        if (!userId) {
-            errorResponseWithStatusCode(res, 'User ID required', HTTP_BAD_REQUEST_400)
+        if (!currentUser) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
             return
         }
 
-        const user = await User.findById(userId).select('-password -token').lean()
-        if (!user) {
+        const userDetails = await User.findById(currentUser._id).select('-password -token').lean()
+        if (!userDetails) {
             errorResponse(res, 'User not found')
             return
         }
 
         const data = {
             success: true,
-            user
+            user: userDetails
         }
 
         successResponse(res, data, 'User retrieved successfully')
         return
     } catch (error) {
-        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to retrieve user')
+        catchResponse(res, error as Error, 'Failed to retrieve user')
         return
     }
 }
 
-export async function updateMe(req: TypedRequestWithBody<UpdateUserRequestBody>, res: CombinedResponseType): Promise<void> {
+export async function updateMe(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
         const { error, value } = updateUserSchema.validate(req.body)
         if (error) {
@@ -164,12 +164,10 @@ export async function updateMe(req: TypedRequestWithBody<UpdateUserRequestBody>,
             return
         }
 
-        // Note: In production, get userId from req.user (auth middleware)
-        // For now, using query param as placeholder
-        const userId = req.query.userId as string
+        const userId = req.user?._id
 
         if (!userId) {
-            errorResponseWithStatusCode(res, 'User ID required', HTTP_BAD_REQUEST_400)
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
             return
         }
 
@@ -197,12 +195,12 @@ export async function updateMe(req: TypedRequestWithBody<UpdateUserRequestBody>,
     }
 }
 
-export async function getOverview(req: TypedRequestWithQuery<UserIdQuery>, res: CombinedResponseType): Promise<void> {
+export async function getOverview(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
-        const { userId } = req.query
+        const userId = req.user?._id
 
         if (!userId) {
-            errorResponseWithStatusCode(res, 'User ID required', HTTP_BAD_REQUEST_400)
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
             return
         }
 
@@ -221,12 +219,12 @@ export async function getOverview(req: TypedRequestWithQuery<UserIdQuery>, res: 
     }
 }
 
-export async function getActivity(req: TypedRequestWithQuery<UserIdQuery>, res: CombinedResponseType): Promise<void> {
+export async function getActivity(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
-        const { userId } = req.query
+        const userId = req.user?._id
 
         if (!userId) {
-            errorResponseWithStatusCode(res, 'User ID required', HTTP_BAD_REQUEST_400)
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
             return
         }
 
@@ -245,13 +243,12 @@ export async function getActivity(req: TypedRequestWithQuery<UserIdQuery>, res: 
     }
 }
 
-export async function deleteMe(req: TypedRequestWithQuery<UserIdQuery>, res: CombinedResponseType): Promise<void> {
+export async function deleteMe(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
-        // Note: In production, get userId from req.user (auth middleware)
-        const { userId } = req.query
+        const userId = req.user?._id
 
         if (!userId) {
-            errorResponseWithStatusCode(res, 'User ID required', HTTP_BAD_REQUEST_400)
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
             return
         }
 

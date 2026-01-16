@@ -1,5 +1,5 @@
 import { Response } from "express"
-import { SuccessResponse, ErrorResponse, CatchResponse } from "../types/index.d"
+import { SuccessResponse, ErrorResponse, CatchResponse } from "../types/index"
 import bcrypt from "bcrypt"
 import { v4 as uuidv4 } from "uuid"
 import { User } from "../models/user.model"

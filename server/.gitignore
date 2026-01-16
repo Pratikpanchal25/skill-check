@@ -46,6 +46,5 @@ Thumbs.db
 *.mov
 *.wmv
 
-.env
 .vscode
 *.pem

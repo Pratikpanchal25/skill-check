@@ -14,6 +14,12 @@ const SkillCheckSessionSchema = new Schema(
             enum: ["voice", "text"],
             required: true,
         },
+        difficulty: {
+            type: String,
+            enum: ["beginner", "intermediate", "advanced"],
+            required: true,
+            default: "beginner"
+        },
     },
     { timestamps: true }
 );
