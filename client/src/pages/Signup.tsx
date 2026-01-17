@@ -52,21 +52,21 @@ export const Signup: React.FC = () => {
     }
 
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-100 px-6">
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-background px-6">
             {/* MAIN CARD */}
-            <div className="relative w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)]">
+            <div className="relative w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-card border border-border shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)] dark:shadow-none">
 
                 {/* LEFT – FORM */}
                 <div className="p-12 md:p-16 flex flex-col justify-center">
                     {/* Logo */}
                     <div className="mb-10 flex items-center gap-2">
                         <img src="/logo.png" alt="Skillcheck" className="h-16 w-auto" />
-                        <span className="text-xl font-semibold tracking-tight">
+                        <span className="text-xl font-semibold tracking-tight text-foreground">
                             Skillcheck
                         </span>
                     </div>
 
-                    <h1 className="text-3xl font-semibold mb-2">
+                    <h1 className="text-3xl font-semibold mb-2 text-foreground">
                         Create account
                     </h1>
                     <p className="text-sm text-muted-foreground mb-10 max-w-sm">
@@ -76,34 +76,34 @@ export const Signup: React.FC = () => {
                     <form onSubmit={handleSubmit} className="space-y-6 max-w-sm">
                         {/* Name */}
                         <div className="space-y-1.5">
-                            <Label>Full name</Label>
+                            <Label className="text-foreground">Full name</Label>
                             <Input
                                 name="name"
                                 placeholder="John Doe"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="h-12 rounded-full bg-slate-50 focus:bg-white"
+                                className="h-12 rounded-full bg-muted/50 border-input focus:bg-background text-foreground"
                                 required
                             />
                         </div>
 
                         {/* Email */}
                         <div className="space-y-1.5">
-                            <Label>Email</Label>
+                            <Label className="text-foreground">Email</Label>
                             <Input
                                 type="email"
                                 name="email"
                                 placeholder="you@example.com"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="h-12 rounded-full bg-slate-50 focus:bg-white"
+                                className="h-12 rounded-full bg-muted/50 border-input focus:bg-background text-foreground"
                                 required
                             />
                         </div>
 
                         {/* Role */}
                         <div className="space-y-2">
-                            <Label>I am a</Label>
+                            <Label className="text-foreground">I am a</Label>
                             <div className="grid grid-cols-2 gap-3">
                                 {(['student', 'engineer'] as const).map(role => (
                                     <button
@@ -115,8 +115,8 @@ export const Signup: React.FC = () => {
                                         className={clsx(
                                             'h-12 rounded-full border text-sm font-medium transition',
                                             formData.role === role
-                                                ? 'border-blue-800 bg-blue-50 text-blue-800'
-                                                : 'border-slate-200 hover:bg-slate-50'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-input hover:bg-muted text-foreground'
                                         )}
                                     >
                                         {role === 'student'
@@ -129,21 +129,21 @@ export const Signup: React.FC = () => {
 
                         {/* Password */}
                         <div className="space-y-1.5">
-                            <Label>Password</Label>
+                            <Label className="text-foreground">Password</Label>
                             <Input
                                 type="password"
                                 name="password"
                                 placeholder="Create a strong password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="h-12 rounded-full bg-slate-50 focus:bg-white"
+                                className="h-12 rounded-full bg-muted/50 border-input focus:bg-background text-foreground"
                                 required
                             />
                         </div>
 
                         <Button
                             size="lg"
-                            className="w-full h-12 rounded-full bg-blue-800 hover:bg-blue-900"
+                            className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
                             disabled={loading}
                         >
                             {loading ? 'Creating account...' : 'Create account'}
@@ -154,7 +154,7 @@ export const Signup: React.FC = () => {
                         Already have an account?{' '}
                         <Link
                             to="/login"
-                            className="font-medium text-blue-800 hover:underline"
+                            className="font-medium text-primary hover:underline"
                         >
                             Log in
                         </Link>

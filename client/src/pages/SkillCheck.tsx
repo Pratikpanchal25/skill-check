@@ -111,7 +111,7 @@ export const SkillCheck: React.FC = () => {
             <div className="space-y-12 animate-in fade-in duration-500">
                 {/* Header */}
                 <div className="space-y-2">
-                    <h1 className="text-4xl font-bold tracking-tight">Start Skill Check</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-foreground">Start Skill Check</h1>
                     <p className="text-muted-foreground text-lg">
                         Explain a technical concept in your words. We evaluate clarity, correctness, and depth.
                     </p>
@@ -119,14 +119,14 @@ export const SkillCheck: React.FC = () => {
 
                 {/* Topic Selection */}
                 <div className="space-y-6">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <h2 className="text-xl font-semibold flex items-center gap-2 text-foreground">
                         Choose a Topic
                     </h2>
                     <div className="flex flex-wrap gap-3">
                         <Button
                             variant="outline"
                             size="icon"
-                            className="rounded-full h-11 w-11 text-blue-600 border-blue-100 bg-blue-50/50 hover:bg-blue-50"
+                            className="rounded-full h-11 w-11 text-primary border-primary/20 bg-primary/10 hover:bg-primary/20"
                             onClick={() => {
                                 setIsCustomTopic(false);
                                 const random = skills[Math.floor(Math.random() * skills.length)];
@@ -145,8 +145,8 @@ export const SkillCheck: React.FC = () => {
                                 className={cn(
                                     "px-6 py-2.5 rounded-full text-sm font-medium transition-all border",
                                     !isCustomTopic && selectedSkill?._id === skill._id
-                                        ? "bg-blue-600 text-white border-blue-600 shadow-md scale-105"
-                                        : "bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:bg-slate-50"
+                                        ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
+                                        : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50"
                                 )}
                             >
                                 {skill.name}
@@ -157,8 +157,8 @@ export const SkillCheck: React.FC = () => {
                             className={cn(
                                 "px-6 py-2.5 rounded-full text-sm font-medium border transition-all",
                                 isCustomTopic
-                                    ? "bg-blue-600 text-white border-blue-600 shadow-md scale-105"
-                                    : "border-dashed border-slate-300 text-slate-500 hover:border-slate-400 hover:bg-slate-50"
+                                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
+                                    : "border-dashed border-muted-foreground/50 text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
                             )}
                         >
                             Custom Topic
@@ -167,12 +167,12 @@ export const SkillCheck: React.FC = () => {
 
                     {isCustomTopic && (
                         <div className="max-w-sm pt-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label className="text-xs font-bold text-slate-500 uppercase mb-1.5 block">Custom Skill Name</Label>
+                            <Label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">Custom Skill Name</Label>
                             <Input
                                 placeholder="e.g. Redis, Kubernetes, React Hooks..."
                                 value={customTopicName}
                                 onChange={(e) => setCustomTopicName(e.target.value)}
-                                className="h-12 rounded-xl bg-slate-50/50 border-slate-200 focus:bg-white"
+                                className="h-12 rounded-xl bg-muted/50 border-input focus:bg-background text-foreground"
                             />
                         </div>
                     )}
@@ -180,7 +180,7 @@ export const SkillCheck: React.FC = () => {
 
                 {/* Difficulty Selection */}
                 <div className="space-y-6">
-                    <h2 className="text-xl font-semibold">Select Difficulty</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Select Difficulty</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[
                             { id: 'beginner', title: 'Beginner', desc: '(Fundamental concepts)' },
@@ -193,12 +193,12 @@ export const SkillCheck: React.FC = () => {
                                 className={cn(
                                     "cursor-pointer transition-all border-2",
                                     difficulty === level.id
-                                        ? "border-blue-600 bg-blue-50/30"
-                                        : "border-slate-100 hover:border-slate-200"
+                                        ? "border-primary bg-primary/5 dark:bg-primary/10"
+                                        : "border-border hover:border-primary/30"
                                 )}
                             >
                                 <div className="p-6">
-                                    <h3 className="font-bold text-lg">{level.title}</h3>
+                                    <h3 className="font-bold text-lg text-foreground">{level.title}</h3>
                                     <p className="text-sm text-muted-foreground mt-1">{level.desc}</p>
                                 </div>
                             </Card>
@@ -207,20 +207,20 @@ export const SkillCheck: React.FC = () => {
                 </div>
 
                 {/* Instructions */}
-                <Card className="bg-slate-50/50 border-slate-100">
+                <Card className="bg-muted/30 border-border">
                     <div className="p-6 space-y-4">
-                        <h3 className="font-bold">Instructions</h3>
-                        <ul className="space-y-3 text-slate-600">
+                        <h3 className="font-bold text-foreground">Instructions</h3>
+                        <ul className="space-y-3 text-muted-foreground">
                             <li className="flex items-center gap-3">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 text-xs font-bold">1</span>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border text-xs font-bold text-foreground">1</span>
                                 Select your topic & difficulty
                             </li>
                             <li className="flex items-center gap-3">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 text-xs font-bold">2</span>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border text-xs font-bold text-foreground">2</span>
                                 Record your explanation (up to 5 min)
                             </li>
                             <li className="flex items-center gap-3">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 text-xs font-bold">3</span>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border text-xs font-bold text-foreground">3</span>
                                 Get instant AI feedback & insights
                             </li>
                         </ul>
@@ -232,7 +232,7 @@ export const SkillCheck: React.FC = () => {
                     <Button variant="ghost" onClick={() => navigate('/dashboard')}>Back</Button>
                     <Button
                         size="lg"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl h-12 shadow-lg shadow-blue-500/20"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-xl h-12 shadow-lg shadow-primary/20"
                         onClick={handleStartSession}
                         disabled={loading || (!isCustomTopic && !selectedSkill) || (isCustomTopic && !customTopicName.trim())}
                     >

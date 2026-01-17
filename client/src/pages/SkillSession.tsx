@@ -147,7 +147,7 @@ export const SkillSession: React.FC = () => {
     if (loading && !session) {
         return (
             <div className="h-[60vh] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -157,18 +157,18 @@ export const SkillSession: React.FC = () => {
             {step === 1 && (
                 <div className="flex flex-col items-center justify-center space-y-12 py-12 animate-in slide-in-from-bottom-8 duration-500">
                     <div className="text-center space-y-4">
-                        <div className="inline-block p-3 bg-blue-100 rounded-2xl text-blue-600 mb-2">
+                        <div className="inline-block p-3 bg-primary/20 rounded-2xl text-primary mb-2">
                             <Brain className="h-8 w-8" />
                         </div>
-                        <h2 className="text-3xl font-bold">Explaining {session?.skillId?.name}</h2>
+                        <h2 className="text-3xl font-bold text-foreground">Explaining {session?.skillId?.name}</h2>
                         <p className="text-muted-foreground max-w-md mx-auto">
                             Go ahead! Explain the concepts, architecture, and use cases you know.
                         </p>
                     </div>
 
                     {/* Recording Visualizer Block */}
-                    <div className="relative flex flex-col items-center space-y-8 bg-blue-50/30 w-full max-w-xl p-12 rounded-[2.5rem] border border-blue-100/50">
-                        <div className="text-5xl font-mono font-bold text-slate-800">
+                    <div className="relative flex flex-col items-center space-y-8 bg-primary/5 dark:bg-primary/10 w-full max-w-xl p-12 rounded-[2.5rem] border border-primary/10">
+                        <div className="text-5xl font-mono font-bold text-foreground">
                             {formatTime(recordingTime)}
                         </div>
 
@@ -180,8 +180,8 @@ export const SkillSession: React.FC = () => {
                                     className={cn(
                                         "h-24 w-24 rounded-full border-4 shadow-xl active:scale-95 transition-all text-white",
                                         isRecording
-                                            ? "bg-red-500 hover:bg-red-600 border-red-200 animate-pulse"
-                                            : "bg-blue-600 hover:bg-blue-700 border-blue-200"
+                                            ? "bg-red-500 hover:bg-red-600 border-red-200 dark:border-red-900 animate-pulse"
+                                            : "bg-primary hover:bg-primary/90 border-primary/30"
                                     )}
                                 >
                                     {isRecording ? <StopCircle className="h-10 w-10 fill-white" /> : <Mic className="h-10 w-10" />}
@@ -198,7 +198,7 @@ export const SkillSession: React.FC = () => {
                                     </Button>
                                     <Button
                                         size="lg"
-                                        className="h-16 px-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                                        className="h-16 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
                                         onClick={handleSubmitEvaluation}
                                         disabled={loading}
                                     >
@@ -209,7 +209,7 @@ export const SkillSession: React.FC = () => {
                         </div>
 
                         {isRecording && (
-                            <div className="absolute -bottom-4 bg-white px-4 py-1 rounded-full border border-slate-200 shadow-sm text-xs font-bold text-red-500 flex items-center gap-2 animate-bounce">
+                            <div className="absolute -bottom-4 bg-card px-4 py-1 rounded-full border border-border shadow-sm text-xs font-bold text-red-500 flex items-center gap-2 animate-bounce">
                                 <span className="h-2 w-2 rounded-full bg-red-500" /> Recording Live
                             </div>
                         )}
@@ -219,14 +219,14 @@ export const SkillSession: React.FC = () => {
 
             {step === 2 && evaluation && (
                 <div className="space-y-8 animate-in zoom-in-95 duration-500">
-                    <Card className="border-blue-100 shadow-2xl overflow-hidden rounded-[2.5rem]">
-                        <div className="bg-linear-to-b from-blue-50 to-white p-12 text-center space-y-6">
+                    <Card className="border-primary/20 shadow-2xl overflow-hidden rounded-[2.5rem]">
+                        <div className="bg-linear-to-b from-primary/10 to-transparent p-12 text-center space-y-6">
                             <div className="text-7xl mb-4">
                                 {evaluation.reaction === 'impressed' ? '🤩' : evaluation.reaction === 'neutral' ? '😐' : evaluation.reaction === 'confused' ? '😕' : '🤨'}
                             </div>
                             <div className="space-y-2">
-                                <h2 className="text-3xl font-bold">Interviewer Reaction</h2>
-                                <p className="text-blue-600 font-bold uppercase tracking-widest text-sm">
+                                <h2 className="text-3xl font-bold text-foreground">Interviewer Reaction</h2>
+                                <p className="text-primary font-bold uppercase tracking-widest text-sm">
                                     "{evaluation.reaction}!"
                                 </p>
                             </div>
@@ -240,14 +240,14 @@ export const SkillSession: React.FC = () => {
                             </div>
 
                             {/* Missing Concepts */}
-                            <div className="bg-slate-50/50 rounded-4xl p-8 border border-slate-100">
-                                <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
+                            <div className="bg-muted/30 rounded-4xl p-8 border border-border">
+                                <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-foreground">
                                     <Sparkles className="h-5 w-5 text-yellow-500" />
                                     Concepts to Dive Deeper Into
                                 </h3>
                                 <div className="flex flex-wrap gap-3">
                                     {evaluation.missingConcepts.map((concept, i) => (
-                                        <span key={i} className="px-5 py-2 bg-white rounded-xl text-slate-700 font-medium shadow-sm border border-slate-100">
+                                        <span key={i} className="px-5 py-2 bg-card rounded-xl text-foreground font-medium shadow-sm border border-border">
                                             {concept}
                                         </span>
                                     ))}
@@ -261,7 +261,7 @@ export const SkillSession: React.FC = () => {
                                 <Button variant="outline" size="lg" className="rounded-xl px-12 h-14" onClick={() => navigate('/dashboard')}>
                                     Dashboard
                                 </Button>
-                                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-12 h-14" onClick={() => navigate('/dashboard/skillcheck')}>
+                                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-12 h-14" onClick={() => navigate('/dashboard/skillcheck')}>
                                     Try Another Concept
                                 </Button>
                             </div>
@@ -275,9 +275,9 @@ export const SkillSession: React.FC = () => {
 
 const ScoreCard = ({ label, score, color }: { label: string, score: number, color: 'blue' | 'green' | 'purple' }) => {
     const colors = {
-        blue: 'text-blue-600 bg-blue-50 border-blue-100',
-        green: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-        purple: 'text-purple-600 bg-purple-50 border-purple-100'
+        blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border-blue-100 dark:border-blue-900',
+        green: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-900',
+        purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50 border-purple-100 dark:border-purple-900'
     };
 
     return (

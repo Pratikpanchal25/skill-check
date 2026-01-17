@@ -50,52 +50,52 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-100 px-6">
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-background px-6">
             {/* MAIN CARD */}
             <div
-                className="relative w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)]" >
+                className="relative w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-card border border-border shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)] dark:shadow-none" >
 
                 {/* LEFT – FORM (PLAIN WHITE) */}
                 <div className="p-12 md:p-16 flex flex-col justify-center">
                     {/* Logo */}
                     <div className="mb-10 flex items-center gap-2">
                         <img src="/logo.png" alt="Skillcheck" className="h-16 w-auto" />
-                        <span className="text-xl font-semibold tracking-tight">Skillcheck</span>
+                        <span className="text-xl font-semibold tracking-tight text-foreground">Skillcheck</span>
                     </div>
 
-                    <h1 className="text-3xl font-semibold mb-2">Login</h1>
+                    <h1 className="text-3xl font-semibold mb-2 text-foreground">Login</h1>
                     <p className="text-sm text-muted-foreground mb-10 max-w-sm">
                         Continue improving your real technical skills.
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-6 max-w-sm">
                         <div className="space-y-1.5">
-                            <Label>Email</Label>
+                            <Label className="text-foreground">Email</Label>
                             <Input
                                 type="email"
                                 placeholder="you@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="h-12 rounded-full bg-slate-50 focus:bg-white"
+                                className="h-12 rounded-full bg-muted/50 border-input focus:bg-background text-foreground"
                                 required
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label>Password</Label>
+                            <Label className="text-foreground">Password</Label>
                             <Input
                                 type="password"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="h-12 rounded-full bg-slate-50 focus:bg-white"
+                                className="h-12 rounded-full bg-muted/50 border-input focus:bg-background text-foreground"
                                 required
                             />
                         </div>
 
                         <Button
                             size="lg"
-                            className="w-full h-12 rounded-full bg-blue-800 hover:bg-blue-900"
+                            className="w-full h-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
                             disabled={loading}
                         >
                             {loading ? 'Signing in...' : 'Sign in'}
@@ -106,7 +106,7 @@ export const Login: React.FC = () => {
                         New here?{' '}
                         <Link
                             to="/signup"
-                            className="font-medium text-blue-800 hover:underline"
+                            className="font-medium text-primary hover:underline"
                         >
                             Create an account
                         </Link>
