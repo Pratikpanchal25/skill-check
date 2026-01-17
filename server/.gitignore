@@ -45,6 +45,7 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
+*.env
 
 .vscode
 *.pem
