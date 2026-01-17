@@ -23,6 +23,7 @@ target/
 
 # JetBrains IDE
 .idea/
+.env
 
 # Unit test reports
 TEST*.xml
@@ -45,7 +46,6 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-.env
 
 .vscode
 *.pem
