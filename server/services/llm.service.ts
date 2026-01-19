@@ -63,9 +63,9 @@ ${answerText}
         : [],
       reaction:
         evaluation.reaction === "impressed" ||
-        evaluation.reaction === "neutral" ||
-        evaluation.reaction === "confused" ||
-        evaluation.reaction === "skeptical"
+          evaluation.reaction === "neutral" ||
+          evaluation.reaction === "confused" ||
+          evaluation.reaction === "skeptical"
           ? evaluation.reaction
           : "neutral",
     };
