@@ -33,6 +33,26 @@ interface Session {
     status: string;
 }
 
+interface SpeechRecognitionEvent {
+    results: {
+        length: number;
+        [key: number]: {
+            [key: number]: {
+                transcript: string;
+            };
+        };
+    };
+}
+
+interface SpeechRecognitionInstance {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: (event: SpeechRecognitionEvent) => void;
+    start: () => void;
+    stop: () => void;
+}
+
 export const SkillSession: React.FC = () => {
     const { id: sessionId } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -43,11 +63,23 @@ export const SkillSession: React.FC = () => {
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
-    const [step, setStep] = useState(1); // 1: recording, 2: evaluation
+    const [step, setStep] = useState(1);
+    const [transcript, setTranscript] = useState("");
+    const [pauseCount, setPauseCount] = useState(0);
+    const [avgPauseDuration, setAvgPauseDuration] = useState(0);
+    const [fillerWordCount, setFillerWordCount] = useState(0);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const silenceStartRef = useRef<number | null>(null);
+    const totalPauseTimeRef = useRef<number>(0);
+    const pauseCountRef = useRef<number>(0);
+    const isRecordingRef = useRef<boolean>(false);
+    const isCurrentlyPausedRef = useRef<boolean>(false);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -75,6 +107,8 @@ export const SkillSession: React.FC = () => {
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Setup MediaRecorder
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
@@ -90,6 +124,85 @@ export const SkillSession: React.FC = () => {
                 setAudioBlob(blob);
                 stream.getTracks().forEach(track => track.stop());
             };
+
+            // Setup Speech Recognition
+            const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognitionConstructor) {
+                const recognition = new SpeechRecognitionConstructor() as SpeechRecognitionInstance;
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = (event: SpeechRecognitionEvent) => {
+                    let currentTranscript = "";
+                    for (let i = 0; i < event.results.length; i++) {
+                        currentTranscript += event.results[i][0].transcript;
+                    }
+                    setTranscript(currentTranscript);
+
+                    // Count filler words
+                    const fillers = ['um', 'uh', 'like', 'so', 'actually', 'basically', 'right'];
+                    const words = currentTranscript.toLowerCase().split(/\s+/);
+                    const count = words.filter(word => fillers.includes(word)).length;
+                    setFillerWordCount(count);
+                };
+
+                recognition.start();
+                recognitionRef.current = recognition;
+            }
+
+            // Setup Audio Analysis for Pauses
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+
+            audioContextRef.current = audioContext;
+            analyserRef.current = analyser;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            silenceStartRef.current = null;
+            totalPauseTimeRef.current = 0;
+            pauseCountRef.current = 0;
+
+            const checkSilence = () => {
+                if (!isRecordingRef.current) return;
+
+                analyser.getByteFrequencyData(dataArray);
+                const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+
+                // Threshold for silence (can be adjusted)
+                if (average < 10) {
+                    if (silenceStartRef.current === null) {
+                        silenceStartRef.current = Date.now();
+                    } else {
+                        const silenceDuration = Date.now() - silenceStartRef.current;
+                        // If silent for > 500ms, consider it a potential pause
+                        if (silenceDuration > 500 && !isCurrentlyPausedRef.current) {
+                            isCurrentlyPausedRef.current = true;
+                            pauseCountRef.current += 1;
+                            setPauseCount(pauseCountRef.current);
+                        }
+                    }
+                } else {
+                    if (silenceStartRef.current !== null && isCurrentlyPausedRef.current) {
+                        const pauseDuration = (Date.now() - silenceStartRef.current) / 1000;
+                        totalPauseTimeRef.current += pauseDuration;
+                        setAvgPauseDuration(totalPauseTimeRef.current / pauseCountRef.current);
+                    }
+                    silenceStartRef.current = null;
+                    isCurrentlyPausedRef.current = false;
+                }
+
+                requestAnimationFrame(checkSilence);
+            };
+
+            isRecordingRef.current = true;
+            isCurrentlyPausedRef.current = false;
+            checkSilence();
 
             mediaRecorder.start();
             setIsRecording(true);
@@ -107,7 +220,11 @@ export const SkillSession: React.FC = () => {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
+            isRecordingRef.current = false;
+
             if (timerRef.current) clearInterval(timerRef.current);
+            if (recognitionRef.current) recognitionRef.current.stop();
+            if (audioContextRef.current) audioContextRef.current.close();
         }
     };
 
@@ -122,12 +239,12 @@ export const SkillSession: React.FC = () => {
         setLoading(true);
         try {
             await api.post(`/sessions/${sessionId}/answer`, {
-                rawText: "Sample transcript of the recorded audio for " + session?.skillId?.name,
+                rawText: transcript || ("Sample transcript of the recorded audio for " + session?.skillId?.name),
                 voiceMetrics: {
                     duration: recordingTime,
-                    pauseCount: 2,
-                    avgPauseDuration: 1.5,
-                    fillerWordCount: 3
+                    pauseCount: pauseCount,
+                    avgPauseDuration: parseFloat(avgPauseDuration.toFixed(1)),
+                    fillerWordCount: fillerWordCount
                 }
             });
 
@@ -192,7 +309,14 @@ export const SkillSession: React.FC = () => {
                                         variant="outline"
                                         size="lg"
                                         className="h-16 px-8 rounded-2xl border-2"
-                                        onClick={() => { setAudioBlob(null); setRecordingTime(0); }}
+                                        onClick={() => {
+                                            setAudioBlob(null);
+                                            setRecordingTime(0);
+                                            setTranscript("");
+                                            setPauseCount(0);
+                                            setAvgPauseDuration(0);
+                                            setFillerWordCount(0);
+                                        }}
                                     >
                                         <RotateCcw className="mr-2 h-5 w-5" /> Retake
                                     </Button>

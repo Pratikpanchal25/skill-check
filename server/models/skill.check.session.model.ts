@@ -4,6 +4,7 @@ const SkillCheckSessionSchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         skillId: { type: Schema.Types.ObjectId, ref: "Skill", required: true },
+        skillName: { type: String, required: true },
         mode: {
             type: String,
             enum: ["explain", "drill", "blind"],

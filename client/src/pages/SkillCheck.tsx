@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
-    Shuffle,
     Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -69,6 +68,7 @@ export const SkillCheck: React.FC = () => {
                     category: 'backend'
                 });
                 if (skillRes.data.success) {
+                    console.log(skillRes, 'skillRes')
                     skillToUse = skillRes.data.skill || skillRes.data.data.skill;
                 }
             } catch (error) {
@@ -90,6 +90,7 @@ export const SkillCheck: React.FC = () => {
         try {
             const res = await api.post('/sessions', {
                 skillId: skillToUse._id,
+                skillName: skillToUse.name,
                 mode: 'explain',
                 inputType: 'voice',
                 difficulty,
@@ -123,18 +124,6 @@ export const SkillCheck: React.FC = () => {
                         Choose a Topic
                     </h2>
                     <div className="flex flex-wrap gap-3">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="rounded-full h-11 w-11 text-primary border-primary/20 bg-primary/10 hover:bg-primary/20"
-                            onClick={() => {
-                                setIsCustomTopic(false);
-                                const random = skills[Math.floor(Math.random() * skills.length)];
-                                if (random) setSelectedSkill(random);
-                            }}
-                        >
-                            <Shuffle className="h-4 w-4" />
-                        </Button>
                         {skills?.map((skill) => (
                             <button
                                 key={skill._id}

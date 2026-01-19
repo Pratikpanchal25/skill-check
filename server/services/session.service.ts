@@ -6,6 +6,7 @@ import { Judgement } from "../models/judgement.model";
 interface CreateSessionData {
     userId: string;
     skillId: string;
+    skillName: string;
     mode: "explain" | "drill" | "blind";
     inputType: "voice" | "text";
 }
@@ -28,12 +29,6 @@ interface SubmitAnswerData {
 }
 
 export const submitAnswer = async (sessionId: string, answerData: SubmitAnswerData) => {
-    // Check if answer already exists for this session
-    const existingAnswer = await UserAnswer.findOne({ sessionId });
-    if (existingAnswer) {
-        throw new Error("Answer already exists for this session");
-    }
-
     const answer = new UserAnswer({
         sessionId,
         rawText: answerData.rawText,

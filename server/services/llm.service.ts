@@ -1,9 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
-
 interface EvaluationResult {
   clarity: number;
   correctness: number;
@@ -14,8 +10,12 @@ interface EvaluationResult {
 
 export const evaluateAnswer = async (
   answerText: string,
-  skillName: string,
+  skillName: string
 ): Promise<EvaluationResult> => {
+
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY!
+  });
   try {
     const prompt = `
 You are a senior technical interviewer.
@@ -48,11 +48,18 @@ ${answerText}
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
     });
 
-    const evaluation = JSON.parse(response.text || "{}");
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+
+    const evaluation = JSON.parse(text);
 
     return {
       clarity: clamp(evaluation.clarity),
@@ -70,7 +77,7 @@ ${answerText}
           : "neutral",
     };
   } catch (err) {
-    console.error(err);
+    console.error("Gemini evaluation failed:", err);
     return {
       clarity: 0,
       correctness: 0,

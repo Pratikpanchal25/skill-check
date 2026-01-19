@@ -71,6 +71,7 @@ export interface UpdateUserRequestBody {
 export interface CreateSessionRequestBody {
     userId: string
     skillId: string
+    skillName: string
     mode: "explain" | "drill" | "blind"
     inputType: "voice" | "text"
     difficulty: "beginner" | "intermediate" | "advanced"

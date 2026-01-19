@@ -7,6 +7,9 @@ export const createSessionSchema = Joi.object({
     skillId: Joi.string().required().messages({
         'any.required': 'Skill ID is required'
     }),
+    skillName: Joi.string().required().messages({
+        'any.required': 'Skill Name is required'
+    }),
     mode: Joi.string().valid('explain', 'drill', 'blind').required().messages({
         'any.only': 'Mode must be one of: explain, drill, blind',
         'any.required': 'Mode is required'
