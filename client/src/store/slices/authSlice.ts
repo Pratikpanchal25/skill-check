@@ -8,6 +8,7 @@ interface User {
     name: string;
     role: string;
     token?: string;
+    createdAt?: string;
 }
 
 export interface AuthState {

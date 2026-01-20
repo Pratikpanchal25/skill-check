@@ -70,7 +70,7 @@ export interface UpdateUserRequestBody {
 // Request Body Interfaces for Session endpoints
 export interface CreateSessionRequestBody {
     userId: string
-    skillId: string
+
     skillName: string
     mode: "explain" | "drill" | "blind"
     inputType: "voice" | "text"

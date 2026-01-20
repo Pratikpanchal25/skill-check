@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
-    Loader2
+    Loader2,
+    ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
@@ -37,10 +38,10 @@ export const SkillCheck: React.FC = () => {
         const fetchSkills = async () => {
             try {
                 const res = await api.get('/skills');
-                if (res.data.success) {
-                    setSkills(res.data.skills);
-                    if (res.data.skills.length > 0) {
-                        setSelectedSkill(res.data.skills[0]);
+                if (res.data.success === 1) {
+                    setSkills(res.data.data.skills);
+                    if (res.data.data.skills.length > 0) {
+                        setSelectedSkill(res.data.data.skills[0]);
                     } else {
                         setIsCustomTopic(true);
                     }
@@ -54,29 +55,14 @@ export const SkillCheck: React.FC = () => {
     }, []);
 
     const handleStartSession = async () => {
-        let skillToUse = selectedSkill;
+        let skillToUse: { _id?: string; name: string } | null = selectedSkill;
 
         if (isCustomTopic) {
             if (!customTopicName.trim()) {
                 toast.error('Please enter a custom topic name');
                 return;
             }
-            setLoading(true);
-            try {
-                const skillRes = await api.post('/skills', {
-                    name: customTopicName.trim(),
-                    category: 'backend'
-                });
-                if (skillRes.data.success) {
-                    console.log(skillRes, 'skillRes')
-                    skillToUse = skillRes.data.skill || skillRes.data.data.skill;
-                }
-            } catch (error) {
-                console.error('Failed to create custom skill', error);
-                toast.error('Failed to create custom topic');
-                setLoading(false);
-                return;
-            }
+            skillToUse = { name: customTopicName.trim() };
         }
 
         if (!skillToUse) return;
@@ -89,14 +75,13 @@ export const SkillCheck: React.FC = () => {
         setLoading(true);
         try {
             const res = await api.post('/sessions', {
-                skillId: skillToUse._id,
                 skillName: skillToUse.name,
                 mode: 'explain',
                 inputType: 'voice',
                 difficulty,
                 userId: user._id,
             });
-            if (res.data.success && res.data.data?.session) {
+            if (res.data.success === 1 && res.data.data?.session) {
                 navigate(`/dashboard/session/${res.data.data.session._id}`);
             }
         } catch (error) {
@@ -108,8 +93,16 @@ export const SkillCheck: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="space-y-12 animate-in fade-in duration-500">
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
+            <Button
+                variant="ghost"
+                onClick={() => navigate('/dashboard')}
+                className="group flex items-center gap-2 text-muted-foreground hover:text-foreground -ml-4"
+            >
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                Back to Dashboard
+            </Button>
+            <div className="space-y-12">
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight text-foreground">Start Skill Check</h1>
@@ -218,7 +211,6 @@ export const SkillCheck: React.FC = () => {
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-end gap-4 pt-4">
-                    <Button variant="ghost" onClick={() => navigate('/dashboard')}>Back</Button>
                     <Button
                         size="lg"
                         className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-xl h-12 shadow-lg shadow-primary/20"

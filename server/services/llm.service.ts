@@ -6,6 +6,8 @@ interface EvaluationResult {
   depth: number;
   missingConcepts: string[];
   reaction: "impressed" | "neutral" | "confused" | "skeptical";
+  feedback: string;
+  improvementSuggestions: string[];
 }
 
 export const evaluateAnswer = async (
@@ -30,6 +32,8 @@ Scoring rules:
 Also:
 - Identify important missing concepts (if any)
 - Give a natural interviewer reaction
+- Provide a summary feedback about the user's explanation
+- Provide specific improvement suggestions for the user
 
 Return ONLY valid JSON in this exact format:
 
@@ -38,7 +42,9 @@ Return ONLY valid JSON in this exact format:
   "correctness": number,
   "depth": number,
   "missingConcepts": string[],
-  "reaction": "impressed" | "neutral" | "confused" | "skeptical"
+  "reaction": "impressed" | "neutral" | "confused" | "skeptical",
+  "feedback": "string",
+  "improvementSuggestions": string[]
 }
 
 User answer:
@@ -75,6 +81,10 @@ ${answerText}
           evaluation.reaction === "skeptical"
           ? evaluation.reaction
           : "neutral",
+      feedback: evaluation.feedback || "Good effort! Continue practicing to sharpen your expertise.",
+      improvementSuggestions: Array.isArray(evaluation.improvementSuggestions)
+        ? evaluation.improvementSuggestions
+        : [],
     };
   } catch (err) {
     console.error("Gemini evaluation failed:", err);
@@ -84,6 +94,8 @@ ${answerText}
       depth: 0,
       missingConcepts: ["Evaluation failed"],
       reaction: "neutral",
+      feedback: "We couldn't generate a detailed evaluation at this time. Please try again.",
+      improvementSuggestions: ["Check your connection and retry the evaluation."]
     };
   }
 };

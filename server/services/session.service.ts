@@ -5,7 +5,7 @@ import { Judgement } from "../models/judgement.model";
 
 interface CreateSessionData {
     userId: string;
-    skillId: string;
+
     skillName: string;
     mode: "explain" | "drill" | "blind";
     inputType: "voice" | "text";
@@ -58,7 +58,6 @@ export const submitAnswer = async (sessionId: string, answerData: SubmitAnswerDa
 
 export const getSessionById = async (sessionId: string) => {
     const session = await SkillCheckSession.findById(sessionId)
-        .populate("skillId")
         .populate("userId")
         .lean();
     if (!session) throw new Error("Session not found");
@@ -66,17 +65,43 @@ export const getSessionById = async (sessionId: string) => {
 };
 
 export const getSessionSummary = async (sessionId: string) => {
-    const session = await SkillCheckSession.findById(sessionId).populate("skillId");
+    const session = await SkillCheckSession.findById(sessionId);
     if (!session) throw new Error("Session not found");
 
-    const answer = await UserAnswer.findOne({ sessionId });
-    const evaluation = await Judgement.findOne({ sessionId });
-    const voiceMetrics = await VoiceMetrics.findOne({ sessionId });
+    const answers = await UserAnswer.find({ sessionId }).sort({ createdAt: -1 });
+    const voiceMetrics = await VoiceMetrics.findOne({ sessionId }).sort({ createdAt: -1 });
+
+    const attempts = await Promise.all(answers.map(async (answer) => {
+        // Find evaluation specifically for this answer first
+        let evaluation = await Judgement.findOne({ answerId: answer._id });
+
+        // Fallback for legacy data (if only one answer exists and evaluation has no answerId)
+        if (!evaluation && answers.length === 1) {
+            evaluation = await Judgement.findOne({ sessionId: answer.sessionId, answerId: { $exists: false } });
+        }
+
+        return {
+            answer: {
+                _id: answer._id.toString(),
+                rawText: answer.rawText,
+                transcript: answer.transcript,
+                createdAt: answer.createdAt
+            },
+            evaluation: evaluation ? {
+                clarity: evaluation.clarity,
+                correctness: evaluation.correctness,
+                depth: evaluation.depth,
+                missingConcepts: evaluation.missingConcepts,
+                reaction: evaluation.reaction,
+                feedback: evaluation.feedback,
+                improvementSuggestions: evaluation.improvementSuggestions
+            } : null
+        };
+    }));
 
     return {
         session,
-        answer,
-        evaluation,
+        attempts,
         voiceMetrics
     };
 };

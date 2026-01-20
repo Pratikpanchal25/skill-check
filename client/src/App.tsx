@@ -6,7 +6,10 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { SkillCheck } from './pages/SkillCheck';
-import { SkillSession } from './pages/SkillSession';
+import SkillSessionRecordings from './pages/SkillSessionRecordings';
+import SkillSessionAttempts from './pages/SkillSessionAttempts';
+import { Profile } from './pages/Profile';
+import { ManageAccount } from './pages/ManageAccount';
 import { ThemeProvider } from './components/theme-provider';
 
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -68,7 +71,11 @@ function AppContent() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="skillcheck" element={<SkillCheck />} />
-          <Route path="session/:id" element={<SkillSession />} />
+          <Route path="session/:id" element={<SkillSessionAttempts />} />
+          <Route path="session/:id/record" element={<SkillSessionRecordings />} />
+          <Route path="session/:id/attempts" element={<SkillSessionAttempts />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="manage-account" element={<ManageAccount />} />
         </Route>
 
         {/* Fallback */}

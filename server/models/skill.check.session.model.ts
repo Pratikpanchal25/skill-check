@@ -3,7 +3,6 @@ import { Schema, model } from "mongoose";
 const SkillCheckSessionSchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        skillId: { type: Schema.Types.ObjectId, ref: "Skill", required: true },
         skillName: { type: String, required: true },
         mode: {
             type: String,

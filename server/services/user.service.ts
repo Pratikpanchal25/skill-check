@@ -9,16 +9,16 @@ export const createUser = async (userData: any) => {
 };
 
 export const getUserOverview = async (userId: string) => {
-    const sessions = await SkillCheckSession.find({ userId }).populate("skillId");
+    const sessions = await SkillCheckSession.find({ userId });
 
     // Aggregate scores per skill
     const skillStats: Record<string, any> = {};
 
     for (const session of sessions) {
-        const judgement = await Judgement.findOne({ sessionId: session._id });
+        const judgement = await Judgement.findOne({ sessionId: session._id }).sort({ createdAt: -1 });
         if (!judgement) continue;
 
-        const skillName = (session.skillId as any).name;
+        const skillName = session.skillName;
         if (!skillStats[skillName]) {
             skillStats[skillName] = {
                 clarity: [], correctness: [], depth: [],
@@ -47,20 +47,20 @@ export const getUserOverview = async (userId: string) => {
 
 export const getUserActivity = async (userId: string) => {
     const sessions = await SkillCheckSession.find({ userId })
-        .populate("skillId")
         .sort({ createdAt: -1 });
 
     const activity = await Promise.all(sessions.map(async (session) => {
-        const judgement = await Judgement.findOne({ sessionId: session._id });
+        const judgement = await Judgement.findOne({ sessionId: session._id }).sort({ createdAt: -1 });
+        console.log(judgement)
         const score = judgement
             ? ((judgement.correctness || 0) + (judgement.clarity || 0) + (judgement.depth || 0)) / 3
             : null;
 
         return {
-            id: session._id,
-            skill: (session.skillId as any).name,
+            id: session._id.toString(),
+            skill: session.skillName,
             mode: session.mode,
-            createdAt: session.createdAt,
+            createdAt: session.createdAt.toISOString(),
             evaluated: !!judgement,
             score
         };

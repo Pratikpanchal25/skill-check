@@ -228,11 +228,11 @@ export async function getActivity(req: AuthRequest, res: CombinedResponseType): 
             return
         }
 
-        const activity = await UserService.getUserActivity(userId)
+        const activities = await UserService.getUserActivity(userId)
 
         const data = {
             success: true,
-            activity
+            activities
         }
 
         successResponse(res, data, 'User activity retrieved successfully')

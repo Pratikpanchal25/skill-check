@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { ModeToggle } from '@/components/mode-toggle'
 import api from '@/lib/api'
 import { AxiosError } from 'axios'
 import clsx from 'clsx'
@@ -53,8 +54,13 @@ export const Signup: React.FC = () => {
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center bg-background px-6">
+            {/* Theme Toggle */}
+            <div className="absolute top-6 right-6">
+                <ModeToggle />
+            </div>
+
             {/* MAIN CARD */}
-            <div className="relative w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-card border border-border shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)] dark:shadow-none">
+            <div className="relative w-full max-w-6xl h-[850px] grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden bg-card border border-border shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)] dark:shadow-none">
 
                 {/* LEFT – FORM */}
                 <div className="p-12 md:p-16 flex flex-col justify-center">
@@ -162,11 +168,16 @@ export const Signup: React.FC = () => {
                 </div>
 
                 {/* RIGHT – ILLUSTRATION */}
-                <div>
+                <div className="flex items-center justify-center bg-muted/30 dark:bg-primary/5 relative">
                     <img
                         src="/right-bg.png"
                         alt="Skillcheck illustration"
-                        className="w-full hidden lg:block h-full"
+                        className="w-full h-full hidden lg:block dark:hidden object-cover"
+                    />
+                    <img
+                        src="/dark-cartoon.png"
+                        alt="Skillcheck illustration"
+                        className="w-full h-full hidden dark:lg:block object-cover"
                     />
                 </div>
             </div>

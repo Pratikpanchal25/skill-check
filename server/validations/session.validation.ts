@@ -4,9 +4,7 @@ export const createSessionSchema = Joi.object({
     userId: Joi.string().required().messages({
         'any.required': 'User ID is required'
     }),
-    skillId: Joi.string().required().messages({
-        'any.required': 'Skill ID is required'
-    }),
+
     skillName: Joi.string().required().messages({
         'any.required': 'Skill Name is required'
     }),

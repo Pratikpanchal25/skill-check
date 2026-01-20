@@ -3,7 +3,6 @@ import { Judgement } from "../models/judgement.model";
 
 interface ProgressData {
     skill: string;
-    skillId: string;
     sessions: number;
     averageScore: number;
     trend: "improving" | "declining" | "stable";
@@ -12,7 +11,6 @@ interface ProgressData {
 
 interface SkillGap {
     skill: string;
-    skillId: string;
     category: string;
     missingConcepts: string[];
     frequency: number;
@@ -30,7 +28,6 @@ interface ReadinessScore {
 
 export const getUserProgress = async (userId: string): Promise<ProgressData[]> => {
     const sessions = await SkillCheckSession.find({ userId })
-        .populate("skillId")
         .sort({ createdAt: -1 })
         .lean();
 
@@ -38,21 +35,19 @@ export const getUserProgress = async (userId: string): Promise<ProgressData[]> =
 
     // Group sessions by skill
     for (const session of sessions) {
-        const skillId = (session.skillId as any)?._id?.toString();
-        const skillName = (session.skillId as any)?.name;
+        const skillName = session.skillName;
 
-        if (!skillId || !skillName) continue;
+        if (!skillName) continue;
 
-        if (!skillMap.has(skillId)) {
-            skillMap.set(skillId, {
+        if (!skillMap.has(skillName)) {
+            skillMap.set(skillName, {
                 skill: skillName,
-                skillId,
                 sessions: [],
                 evaluations: []
             });
         }
 
-        skillMap.get(skillId).sessions.push(session);
+        skillMap.get(skillName).sessions.push(session);
     }
 
     // Get evaluations for all sessions
@@ -70,7 +65,7 @@ export const getUserProgress = async (userId: string): Promise<ProgressData[]> =
     // Calculate progress per skill
     const progress: ProgressData[] = [];
 
-    for (const [skillId, data] of skillMap.entries()) {
+    for (const [skillName, data] of skillMap.entries()) {
         const skillEvaluations = data.sessions
             .map((s: any) => evaluationMap.get(s._id.toString()))
             .filter((e: any) => e != null);
@@ -102,7 +97,6 @@ export const getUserProgress = async (userId: string): Promise<ProgressData[]> =
 
         progress.push({
             skill: data.skill,
-            skillId,
             sessions: skillEvaluations.length,
             averageScore: Math.round(averageScore * 10) / 10,
             trend,
@@ -115,7 +109,6 @@ export const getUserProgress = async (userId: string): Promise<ProgressData[]> =
 
 export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
     const sessions = await SkillCheckSession.find({ userId })
-        .populate("skillId")
         .lean();
 
     const sessionIds = sessions.map(s => s._id.toString());
@@ -125,7 +118,6 @@ export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
 
     const gapMap = new Map<string, {
         skill: string;
-        skillId: string;
         category: string;
         missingConcepts: Map<string, number>;
         scores: number[];
@@ -135,23 +127,21 @@ export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
         const session = sessions.find(s => s._id.toString() === evaluation.sessionId.toString());
         if (!session) continue;
 
-        const skillId = (session.skillId as any)?._id?.toString();
-        const skillName = (session.skillId as any)?.name;
-        const category = (session.skillId as any)?.category;
+        const skillName = session.skillName;
+        const category = "general"; // Category was previously in skill model
 
-        if (!skillId || !skillName) continue;
+        if (!skillName) continue;
 
-        if (!gapMap.has(skillId)) {
-            gapMap.set(skillId, {
+        if (!gapMap.has(skillName)) {
+            gapMap.set(skillName, {
                 skill: skillName,
-                skillId,
-                category: category || "unknown",
+                category: category,
                 missingConcepts: new Map(),
                 scores: []
             });
         }
 
-        const gap = gapMap.get(skillId)!;
+        const gap = gapMap.get(skillName)!;
 
         // Ensure properties exist before accessing
         const clarity = evaluation.clarity || 0;
@@ -167,7 +157,7 @@ export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
 
     const skillGaps: SkillGap[] = [];
 
-    for (const [skillId, data] of gapMap.entries()) {
+    for (const [skillName, data] of gapMap.entries()) {
         // Sort missing concepts by frequency
         const sortedConcepts = Array.from(data.missingConcepts.entries())
             .sort((a, b) => b[1] - a[1])
@@ -177,7 +167,6 @@ export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
 
         skillGaps.push({
             skill: data.skill,
-            skillId,
             category: data.category,
             missingConcepts: sortedConcepts,
             frequency: data.scores.length,
@@ -193,7 +182,6 @@ export const getUserSkillGaps = async (userId: string): Promise<SkillGap[]> => {
 
 export const getUserReadinessScore = async (userId: string): Promise<ReadinessScore> => {
     const sessions = await SkillCheckSession.find({ userId })
-        .populate("skillId")
         .lean();
 
     const sessionIds = sessions.map(s => s._id.toString());
@@ -211,9 +199,8 @@ export const getUserReadinessScore = async (userId: string): Promise<ReadinessSc
     }>();
 
     for (const session of sessions) {
-        const skillId = (session.skillId as any)?._id?.toString();
-        const skillName = (session.skillId as any)?.name;
-        const category = (session.skillId as any)?.category || "unknown";
+        const skillName = session.skillName;
+        const category = "general";
 
         const evaluation = evaluationMap.get(session._id.toString());
         if (!evaluation) continue;

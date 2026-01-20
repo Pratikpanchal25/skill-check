@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface OverviewItem {
     skill: string;
@@ -17,6 +18,15 @@ interface OverviewItem {
     sessionCount: number;
 }
 
+interface ActivityItem {
+    id: string;
+    skill: string;
+    mode: string;
+    createdAt: string;
+    evaluated: boolean;
+    score: number | null;
+}
+
 export const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const user = useSelector((state: RootState) => state.auth.user);
@@ -24,26 +34,47 @@ export const Dashboard: React.FC = () => {
         sessions: 0,
         skillsPracticed: 0
     });
+    const [activities, setActivities] = useState<ActivityItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             if (user?._id) {
                 try {
-                    const res = await api.get(`/users/me/overview`);
-                    if (res.data.success) {
-                        const overview: OverviewItem[] = res.data.overview;
-                        // Calculate total sessions and unique skills
+                    const [overviewRes, activityRes] = await Promise.all([
+                        api.get(`/users/me/overview`),
+                        api.get(`/users/me/activity`)
+                    ]);
+
+                    if (overviewRes.data.success === 1) {
+                        const overview: OverviewItem[] = overviewRes.data.data.overview;
                         const totalSessions = overview.reduce((acc: number, item: OverviewItem) => acc + item.sessionCount, 0);
                         const uniqueSkills = overview.length;
                         setStats({ sessions: totalSessions, skillsPracticed: uniqueSkills });
                     }
+
+                    if (activityRes.data.success === 1 && activityRes.data.data?.activities) {
+                        setActivities(activityRes.data.data.activities);
+                    }
                 } catch (error) {
-                    console.error("Failed to fetch dashboard stats", error);
+                    console.error("Failed to fetch dashboard data", error);
+                } finally {
+                    setLoading(false);
                 }
             }
         };
-        fetchStats();
+        fetchData();
     }, [user]);
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(date);
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -81,9 +112,6 @@ export const Dashboard: React.FC = () => {
 
                 {/* Primary Action Card */}
                 <Card className="md:col-span-2 border-primary/20 bg-primary/5 dark:bg-primary/10 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Mic className="h-48 w-48 text-primary" />
-                    </div>
                     <CardHeader>
                         <CardTitle className="text-2xl text-primary">Explain a Concept</CardTitle>
                     </CardHeader>
@@ -123,17 +151,69 @@ export const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Recent Activity / Progress Placeholder */}
-            <div className="pt-4">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Recent Progress</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Placeholder Cards for coming soon features */}
-                    <Card className="border-dashed border-2 bg-muted/50">
-                        <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-2">
-                            <Trophy className="h-8 w-8 text-muted-foreground/50" />
-                            <p className="text-sm font-medium text-muted-foreground">More detailed analytics coming soon</p>
-                        </CardContent>
-                    </Card>
+            {/* Recent Activity Section */}
+            <div className="space-y-4">
+
+                <div className="grid grid-cols-1 gap-4">
+                    {loading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        </div>
+                    ) : activities.length > 0 ? (
+                        activities.map((activity) => (
+                            <Card
+                                key={activity.id}
+                                className="hover:border-primary/30 transition-all cursor-pointer group"
+                                onClick={() => navigate(`/dashboard/session/${activity.id}`)}
+                            >
+                                <CardContent className="p-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn(
+                                            "p-2 rounded-lg",
+                                            activity.evaluated ? "bg-green-500/10 text-green-600" : "bg-yellow-500/10 text-yellow-600"
+                                        )}>
+                                            <Mic className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-foreground">{activity.skill}</h4>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span className="capitalize">{activity.mode}</span>
+                                                <span>•</span>
+                                                <span>{formatDate(activity.createdAt)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6">
+                                        {activity.evaluated ? (
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold text-primary">{activity.score ? activity.score.toFixed(1) : '0'}/10</p>
+                                                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Score</p>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-muted px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Pending
+                                            </div>
+                                        )}
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card className="border-dashed border-2 bg-muted/30">
+                            <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                                <Trophy className="h-8 w-8 text-muted-foreground/30" />
+                                <div className="space-y-1">
+                                    <p className="font-medium text-foreground">No sessions yet</p>
+                                    <p className="text-sm text-muted-foreground">Start your first skill check to see progress here.</p>
+                                </div>
+                                <Button size="sm" className="mt-2" onClick={() => navigate('/dashboard/skillcheck')}>
+                                    Get Started
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

@@ -40,12 +40,20 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0 }
-    to { height: var(--radix-accordion-content-height) }
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
   }
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height) }
-    to { height: 0 }
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
   }
 }
 
@@ -82,7 +90,7 @@
     --popover-foreground: 222.2 84% 4.9%;
 
     /* Updated Primary: Brand Deep Blue (Approx #0F3D81) */
-    --primary: 216 80% 28%; 
+    --primary: 216 80% 28%;
     --primary-foreground: 210 40% 98%;
 
     /* Updated Secondary/Accent: Brand Green (Approx #2CAB63) */
@@ -141,6 +149,9 @@
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground;

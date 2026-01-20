@@ -7,6 +7,11 @@ const JudgementSchema = new Schema(
             ref: "SkillCheckSession",
             required: true,
         },
+        answerId: {
+            type: Schema.Types.ObjectId,
+            ref: "UserAnswer",
+            required: true,
+        },
         clarity: Number,
         correctness: Number,
         depth: Number,
