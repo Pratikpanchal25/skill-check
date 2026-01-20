@@ -64,8 +64,25 @@ ${answerText}
     });
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-
-    const evaluation = JSON.parse(text);
+    let evaluation: any = {};
+    try {
+      evaluation = JSON.parse(text);
+    } catch (err) {
+      const first = text.indexOf('{');
+      const last = text.lastIndexOf('}');
+      if (first !== -1 && last !== -1 && last > first) {
+        const maybe = text.slice(first, last + 1);
+        try {
+          evaluation = JSON.parse(maybe);
+        } catch (err2) {
+          console.warn('Failed to parse extracted JSON from model output', err2);
+          evaluation = {};
+        }
+      } else {
+        console.warn('Model output is not valid JSON and no JSON object could be extracted');
+        evaluation = {};
+      }
+    }
 
     return {
       clarity: clamp(evaluation.clarity),

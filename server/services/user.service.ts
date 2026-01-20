@@ -51,7 +51,6 @@ export const getUserActivity = async (userId: string) => {
 
     const activity = await Promise.all(sessions.map(async (session) => {
         const judgement = await Judgement.findOne({ sessionId: session._id }).sort({ createdAt: -1 });
-        console.log(judgement)
         const score = judgement
             ? ((judgement.correctness || 0) + (judgement.clarity || 0) + (judgement.depth || 0)) / 3
             : null;
