@@ -15,6 +15,7 @@ const JudgementSchema = new Schema(
         clarity: Number,
         correctness: Number,
         depth: Number,
+        delivery: Number,
         missingConcepts: [String],
         reaction: {
             type: String,
@@ -23,6 +24,7 @@ const JudgementSchema = new Schema(
         modelVersion: { type: String },
         feedback: String,
         improvementSuggestions: [String],
+        deliveryFeedback: String,
     },
     { timestamps: true }
 );

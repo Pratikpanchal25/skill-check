@@ -21,14 +21,14 @@ export const DashboardLayout: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+        <div className="h-screen overflow-hidden bg-background text-foreground transition-colors duration-300 flex flex-col">
             {/* Top Navigation */}
-            <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
+            <header className="bg-card border-b border-border z-10 shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         {/* Logo */}
                         <div className="flex items-center">
-                            <Link to="/dashboard" className="flex items-center space-x-2">
+                            <Link to="/dashboard" className="flex items-center space-x-2 cursor-pointer">
                                 <img src="/logo.png" alt="Skillcheck" className="h-12 mt-1 auto" />
                                 <span className="text-xl font-bold tracking-tight">Skillcheck</span>
                             </Link>
@@ -37,7 +37,7 @@ export const DashboardLayout: React.FC = () => {
                         {/* Right Side */}
                         <div className="flex items-center space-x-4">
                             <ModeToggle />
-                            <Link to="/dashboard/profile" className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border transition-colors group">
+                            <Link to="/dashboard/profile" className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border transition-colors group cursor-pointer">
                                 <User className="h-4 w-4 group-hover:text-primary transition-colors" />
                                 <span className="font-medium">{user?.name}</span>
                             </Link>
@@ -50,37 +50,46 @@ export const DashboardLayout: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="flex-1 overflow-hidden thin-scrollbar">
                 <Outlet />
             </main>
 
             {/* Logout Confirmation Modal */}
             {showLogoutConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-background/40 backdrop-blur-md" onClick={() => setShowLogoutConfirm(false)} />
-                    <div className="relative bg-card border border-border w-full max-w-[320px] rounded-4xl p-8 shadow-2xl animate-in zoom-in-95 duration-300">
-                        <div className="flex flex-col items-center text-center space-y-5">
-                            <div className="p-3 bg-red-500/10 text-red-500 rounded-xl">
-                                <LogOut className="h-6 w-6" />
+                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm cursor-pointer" onClick={() => setShowLogoutConfirm(false)} />
+                    <div className="relative bg-card border border-border w-full max-w-md rounded-xl shadow-2xl animate-in zoom-in-95 duration-300">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-border/30 flex items-center gap-3">
+                            <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
+                                <LogOut className="h-5 w-5" />
                             </div>
-                            <div className="space-y-1.5">
-                                <h3 className="text-xl font-bold tracking-tight text-foreground">Sign Out?</h3>
-                                <p className="text-sm text-muted-foreground leading-relaxed px-2">Are you sure you want to exit your session?</p>
+                            <div>
+                                <h3 className="text-lg font-semibold">Sign Out</h3>
+                                <p className="text-xs text-muted-foreground">End your current session</p>
                             </div>
-                            <div className="flex flex-col w-full gap-2 pt-2">
-                                <Button
-                                    variant="destructive"
-                                    className="h-11 rounded-xl font-bold"
-                                    onClick={handleLogout}
-                                >
-                                    Log Out
-                                </Button>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-6">
+                            <p className="text-sm text-muted-foreground mb-6">
+                                Are you sure you want to sign out? You'll need to log in again to access your account.
+                            </p>
+                            
+                            <div className="flex gap-3">
                                 <Button
                                     variant="ghost"
-                                    className="h-11 rounded-xl font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    className="flex-1"
                                     onClick={() => setShowLogoutConfirm(false)}
                                 >
                                     Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    className="flex-1"
+                                    onClick={handleLogout}
+                                >
+                                    Sign Out
                                 </Button>
                             </div>
                         </div>

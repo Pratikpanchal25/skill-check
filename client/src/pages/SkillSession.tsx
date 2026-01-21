@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
     Brain,
@@ -259,7 +258,7 @@ export const SkillSession: React.FC = () => {
         setLoading(true);
         try {
             const answerRes = await api.post(`/sessions/${sessionId}/answer`, {
-                rawText: transcript || ("Sample transcript of the recorded audio for " + session?.skillName),
+                rawText: transcript || "Node.js is a JavaScript runtime built on Chrome's V8 engine. It uses an event-driven, non-blocking I/O model making it lightweight and efficient. Node.js excels at building scalable network applications, REST APIs, and real-time services like chat applications using its single-threaded event loop architecture.",
                 voiceMetrics: {
                     duration: recordingTime,
                     pauseCount: pauseCount,
@@ -299,315 +298,422 @@ export const SkillSession: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <div className="bg-background overflow-hidden">
             {step === 1 && (
-                <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/dashboard')}
-                        className="group flex items-center gap-2 text-muted-foreground hover:text-foreground -ml-4"
-                    >
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                        Back to Dashboard
-                    </Button>
-                    <div className="flex flex-col items-center justify-center space-y-12 py-12">
-                        <div className="text-center space-y-4">
-                            <div className="inline-block p-3 bg-primary/20 rounded-2xl text-primary mb-2">
-                                <Brain className="h-8 w-8" />
+                <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    {/* Header */}
+                    <div className="border-b border-border/30 px-6 py-5">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(-1)}
+                                    className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                                    Back
+                                </Button>
+                                <div className="h-6 w-px bg-border/50" />
+                                <h1 className="text-xl font-semibold text-foreground">
+                                    Recording Session
+                                </h1>
                             </div>
-                            <h2 className="text-3xl font-bold text-foreground">Explaining {session?.skillName}</h2>
-                            <p className="text-muted-foreground max-w-md mx-auto">
-                                Go ahead! Explain the concepts, architecture, and use cases you know.
-                            </p>
                         </div>
+                    </div>
 
-                        {/* Recording Visualizer Block */}
-                        <div className="relative flex flex-col items-center space-y-8 bg-primary/5 dark:bg-primary/10 w-full max-w-xl p-12 rounded-[2.5rem] border border-primary/10">
-                            <div className="flex flex-col items-center gap-4 w-full">
-                                <div className="text-5xl font-mono font-bold text-foreground">
-                                    {formatTime(recordingTime)}
+                    <div className="max-w-7xl mx-auto px-6 py-12">
+                        <div className="flex flex-col items-center justify-center space-y-10">
+                            <div className="text-center space-y-4">
+                                <div className="inline-block p-3 bg-primary/10 rounded-xl text-primary mb-2">
+                                    <Brain className="h-8 w-8" />
+                                </div>
+                                <h2 className="text-3xl font-bold text-foreground">Explaining {session?.skillName}</h2>
+                                <p className="text-muted-foreground max-w-md mx-auto">
+                                    Go ahead! Explain the concepts, architecture, and use cases you know.
+                                </p>
+                            </div>
+
+                            {/* Recording Visualizer Block */}
+                            <div className="relative flex flex-col items-center space-y-8 border border-border/50 bg-card w-full max-w-xl p-12 rounded-xl shadow-sm">
+                                <div className="flex flex-col items-center gap-4 w-full">
+                                    <div className="text-5xl font-mono font-bold text-foreground">
+                                        {formatTime(recordingTime)}
+                                    </div>
+
+                                    {isRecording && (
+                                        <AudioVisualizer
+                                            analyser={analyserRef.current}
+                                            isRecording={isRecording}
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-6">
+                                    {!audioBlob ? (
+                                        <Button
+                                            size="lg"
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            className={cn(
+                                                "h-24 w-24 rounded-full border-4 shadow-xl active:scale-95 transition-all text-white",
+                                                isRecording
+                                                    ? "bg-red-500 hover:bg-red-600 border-red-200 dark:border-red-900 animate-pulse"
+                                                    : "bg-primary hover:bg-primary/90 border-primary/30"
+                                            )}
+                                        >
+                                            {isRecording ? <StopCircle className="h-10 w-10 fill-white" /> : <Mic className="h-10 w-10" />}
+                                        </Button>
+                                    ) : (
+                                        <div className="flex gap-4">
+                                            <Button
+                                                variant="outline"
+                                                size="lg"
+                                                className="h-14 px-6 rounded-lg"
+                                                onClick={() => {
+                                                    setAudioBlob(null);
+                                                    setRecordingTime(0);
+                                                    setTranscript("");
+                                                    setPauseCount(0);
+                                                    setAvgPauseDuration(0);
+                                                    setFillerWordCount(0);
+                                                }}
+                                            >
+                                                <RotateCcw className="mr-2 h-5 w-5" /> Retake
+                                            </Button>
+                                            <Button
+                                                size="lg"
+                                                className="h-14 px-10 rounded-lg"
+                                                onClick={handleSubmitEvaluation}
+                                                disabled={loading}
+                                            >
+                                                {loading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <Sparkles className="h-5 w-5 mr-2" />}
+                                                Get Evaluation
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isRecording && (
-                                    <AudioVisualizer
-                                        analyser={analyserRef.current}
-                                        isRecording={isRecording}
-                                    />
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-6">
-                                {!audioBlob ? (
-                                    <Button
-                                        size="lg"
-                                        onClick={isRecording ? stopRecording : startRecording}
-                                        className={cn(
-                                            "h-24 w-24 rounded-full border-4 shadow-xl active:scale-95 transition-all text-white",
-                                            isRecording
-                                                ? "bg-red-500 hover:bg-red-600 border-red-200 dark:border-red-900 animate-pulse"
-                                                : "bg-primary hover:bg-primary/90 border-primary/30"
-                                        )}
-                                    >
-                                        {isRecording ? <StopCircle className="h-10 w-10 fill-white" /> : <Mic className="h-10 w-10" />}
-                                    </Button>
-                                ) : (
-                                    <div className="flex gap-4">
-                                        <Button
-                                            variant="outline"
-                                            size="lg"
-                                            className="h-16 px-8 rounded-2xl border-2"
-                                            onClick={() => {
-                                                setAudioBlob(null);
-                                                setRecordingTime(0);
-                                                setTranscript("");
-                                                setPauseCount(0);
-                                                setAvgPauseDuration(0);
-                                                setFillerWordCount(0);
-                                            }}
-                                        >
-                                            <RotateCcw className="mr-2 h-5 w-5" /> Retake
-                                        </Button>
-                                        <Button
-                                            size="lg"
-                                            className="h-16 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                                            onClick={handleSubmitEvaluation}
-                                            disabled={loading}
-                                        >
-                                            {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Get Evaluation"}
-                                        </Button>
+                                    <div className="absolute -bottom-4 bg-card px-4 py-1.5 rounded-lg border border-red-500/30 shadow-sm text-xs font-bold text-red-500 flex items-center gap-2">
+                                        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> Recording Live
                                     </div>
                                 )}
                             </div>
-
-                            {isRecording && (
-                                <div className="absolute -bottom-4 bg-card px-4 py-1 rounded-full border border-border shadow-sm text-xs font-bold text-red-500 flex items-center gap-2 animate-bounce">
-                                    <span className="h-2 w-2 rounded-full bg-red-500" /> Recording Live
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
             )}
 
             {step === 2 && (
-                <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/dashboard')}
-                        className="group flex items-center gap-2 text-muted-foreground hover:text-foreground -ml-4"
-                    >
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                        Back to Dashboard
-                    </Button>
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                        {/* Attempts History Sidebar */}
-                        <div className="lg:col-span-1 space-y-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="font-bold text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                    <Trophy className="h-4 w-4" /> Attempts
-                                </h3>
+                <div className="animate-in fade-in duration-500">
+                    {/* Header */}
+                    <div className="border-b border-border/30 px-6 py-5">
+                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                            <div className="flex items-center gap-4">
                                 <Button
-                                    size="sm"
                                     variant="ghost"
-                                    className="h-8 px-2 text-primary hover:text-primary/10 hover:bg-primary/5 font-bold text-xs"
-                                    onClick={() => {
-                                        setStep(1);
-                                        setAudioBlob(null);
-                                        setRecordingTime(0);
-                                        setTranscript("");
-                                        setEvaluation(null);
-                                        setSelectedAttemptIndex(null);
-                                    }}
+                                    size="sm"
+                                    onClick={() => navigate('/dashboard')}
+                                    className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
                                 >
-                                    <RotateCcw className="h-3 w-3 mr-1" /> New Take
+                                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                                    Back
                                 </Button>
+                                <div className="h-6 w-px bg-border/50" />
+                                <div>
+                                    <h1 className="text-xl font-semibold text-foreground">{session?.skillName}</h1>
+                                    <p className="text-xs text-muted-foreground">{session?.difficulty} · Session review</p>
+                                </div>
                             </div>
-                            <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-                                {attempts && attempts.length > 0 ? attempts.map((attempt, index) => (
-                                    <Card
-                                        key={attempt.answer._id}
-                                        className={cn(
-                                            "cursor-pointer transition-all border relative group overflow-hidden",
-                                            selectedAttemptIndex === index
-                                                ? "border-primary bg-primary/5 shadow-sm"
-                                                : "border-border/40 hover:border-primary/20 hover:bg-muted/30"
-                                        )}
+                        </div>
+                    </div>
+
+                    {/* Main Grid */}
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 px-6 py-6 items-start">
+                        
+                        {/* LEFT COLUMN - Attempts Sidebar */}
+                        <div className="space-y-6">
+                            {/* Attempts Card */}
+                            <div className="border border-border/50 rounded-xl bg-card">
+                                <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                                        Attempts
+                                    </h3>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 px-2 text-xs"
                                         onClick={() => {
-                                            setSelectedAttemptIndex(index);
-                                            setEvaluation(attempt.evaluation);
+                                            setStep(1);
+                                            setAudioBlob(null);
+                                            setRecordingTime(0);
+                                            setTranscript("");
+                                            setEvaluation(null);
+                                            setSelectedAttemptIndex(null);
                                         }}
                                     >
-                                        <CardContent className="p-3">
-                                            <div className="flex justify-between items-center mb-1.5">
-                                                <div className="space-y-0.5">
-                                                    <span className="text-[10px] font-bold text-muted-foreground/80 block uppercase tracking-tight">TAKE #{attempts.length - index}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {attempt.evaluation && (
-                                                        <div className="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded border border-primary/10">
-                                                            {((attempt.evaluation.correctness + attempt.evaluation.clarity + attempt.evaluation.depth) / 3).toFixed(1)}
-                                                        </div>
-                                                    )}
-                                                    <p className="text-[9px] text-muted-foreground/60 font-medium">
-                                                        {new Date(attempt.answer.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </p>
-                                                </div>
+                                        <RotateCcw className="h-3 w-3 mr-1" /> New
+                                    </Button>
+                                </div>
+                                <div className="p-2 max-h-[60vh] overflow-y-auto">
+                                    {attempts && attempts.length > 0 ? attempts.map((attempt, index) => (
+                                        <button
+                                            key={attempt.answer._id}
+                                            className={cn(
+                                                "w-full text-left px-3 py-2.5 rounded-lg transition-all mb-1 last:mb-0 cursor-pointer",
+                                                selectedAttemptIndex === index
+                                                    ? "bg-primary/10 border border-primary/30"
+                                                    : "hover:bg-muted/50 border border-transparent"
+                                            )}
+                                            onClick={() => {
+                                                setSelectedAttemptIndex(index);
+                                                setEvaluation(attempt.evaluation);
+                                            }}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium">Take {attempts.length - index}</span>
+                                                {attempt.evaluation && (
+                                                    <span className="text-sm font-bold text-primary">
+                                                        {((attempt.evaluation.correctness + attempt.evaluation.clarity + attempt.evaluation.depth) / 3).toFixed(1)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p className="text-[11px] text-foreground/70 line-clamp-2 leading-relaxed italic">
-                                                "{attempt.answer.rawText || attempt.answer.transcript}"
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                {new Date(attempt.answer.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
-                                        </CardContent>
-                                    </Card>
-                                )) : (
-                                    <p className="text-sm text-muted-foreground italic text-center py-8">No attempts recorded</p>
-                                )}
+                                        </button>
+                                    )) : (
+                                        <p className="text-sm text-muted-foreground text-center py-8">No attempts recorded</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Content Area */}
-                        <div className="lg:col-span-3">
+                        {/* RIGHT COLUMN - Evaluation Content */}
+                        <div className="space-y-6">
                             {evaluation ? (
-                                <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                                    <Card className="border-border shadow-xl overflow-hidden rounded-3xl bg-card/50 backdrop-blur-xl">
-                                        <div className="bg-linear-to-b from-primary/5 via-primary/0 to-transparent p-10 text-center space-y-4">
-                                            <div className="text-6xl mb-2 drop-shadow-sm animate-bounce duration-2000">
-                                                {evaluation.reaction === 'impressed' ? '🤩' : evaluation.reaction === 'neutral' ? '😐' : evaluation.reaction === 'confused' ? '😕' : '🤨'}
-                                            </div>
-                                            <div className="space-y-1">
-                                                <h2 className="text-3xl font-bold tracking-tight text-foreground lowercase italic">"{evaluation.reaction}!"</h2>
-                                                <p className="text-muted-foreground font-medium text-sm">The interviewer's immediate reaction</p>
+                                <>
+                                    {/* Hero Score Card */}
+                                    <div className="border border-border/50 rounded-xl bg-linear-to-br from-card via-card to-primary/5 overflow-hidden">
+                                        {/* Reaction Header */}
+                                        <div className="px-6 py-6 border-b border-border/30 bg-linear-to-r from-transparent via-primary/5 to-transparent">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-5xl">
+                                                        {evaluation.reaction === 'impressed' ? '🤩' : evaluation.reaction === 'neutral' ? '😐' : evaluation.reaction === 'confused' ? '😕' : '🤨'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Interviewer Reaction</p>
+                                                        <p className="text-2xl font-bold text-foreground capitalize">{evaluation.reaction}!</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Overall Score</p>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <span className="text-4xl font-bold text-primary">
+                                                            {((evaluation.correctness + evaluation.clarity + evaluation.depth) / 3).toFixed(1)}
+                                                        </span>
+                                                        <span className="text-lg text-muted-foreground">/10</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <CardContent className="p-10 pt-0 space-y-10">
-                                            {/* Scoreboard */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                <ScoreCard label="Clarity" score={evaluation.clarity} color="blue" />
-                                                <ScoreCard label="Correctness" score={evaluation.correctness} color="green" />
-                                                <ScoreCard label="Depth" score={evaluation.depth} color="purple" />
+                                        
+                                        {/* Score Breakdown */}
+                                        <div className="p-6">
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <ScoreCard label="Clarity" score={evaluation.clarity} color="blue" icon="💬" />
+                                                <ScoreCard label="Correctness" score={evaluation.correctness} color="green" icon="✓" />
+                                                <ScoreCard label="Depth" score={evaluation.depth} color="purple" icon="🔍" />
                                             </div>
+                                            
+                                            {/* Progress Bars */}
+                                            <div className="mt-6 space-y-3">
+                                                <ScoreBar label="Clarity" score={evaluation.clarity} color="blue" />
+                                                <ScoreBar label="Correctness" score={evaluation.correctness} color="green" />
+                                                <ScoreBar label="Depth" score={evaluation.depth} color="purple" />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                            {/* Detailed Feedback & Analysis */}
-                                            <div className="space-y-6">
-                                                {/* Summary Feedback */}
-                                                {evaluation.feedback && (
-                                                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-8 relative overflow-hidden group">
-                                                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                                            <MessageSquare className="h-24 w-24 text-primary" />
+                                    {/* Interviewer Feedback */}
+                                    {evaluation.feedback && (
+                                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                            <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-primary/5 to-transparent">
+                                                <h3 className="text-sm font-semibold flex items-center gap-2">
+                                                    <div className="p-1.5 rounded-lg bg-primary/10">
+                                                        <MessageSquare className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    Detailed Feedback
+                                                </h3>
+                                            </div>
+                                            <div className="p-6">
+                                                <blockquote className="text-sm text-foreground/90 leading-relaxed italic border-l-4 border-primary/30 pl-4 py-2 bg-muted/20 rounded-r-lg">
+                                                    "{evaluation.feedback}"
+                                                </blockquote>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Analysis Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                                        {/* Key Gaps */}
+                                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                            <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-red-500/5 to-transparent">
+                                                <h3 className="text-sm font-semibold flex items-center gap-2">
+                                                    <div className="p-1.5 rounded-lg bg-red-500/10">
+                                                        <Sparkles className="h-4 w-4 text-red-500" />
+                                                    </div>
+                                                    Areas to Improve
+                                                    {evaluation.missingConcepts.length > 0 && (
+                                                        <span className="ml-auto text-xs bg-red-500/10 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">
+                                                            {evaluation.missingConcepts.length} gaps
+                                                        </span>
+                                                    )}
+                                                </h3>
+                                            </div>
+                                            <div className="p-4 max-h-62.5 overflow-y-auto">
+                                                {evaluation.missingConcepts.length > 0 ? (
+                                                    <ul className="space-y-2">
+                                                        {evaluation.missingConcepts.map((concept, i) => (
+                                                            <li key={i} className="flex items-start gap-3 p-3 bg-red-500/5 border border-red-500/10 rounded-lg text-sm group hover:bg-red-500/10 transition-colors">
+                                                                <div className="mt-0.5 h-5 w-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                                                                    <span className="text-xs font-bold text-red-600 dark:text-red-400">{i + 1}</span>
+                                                                </div>
+                                                                <span className="text-foreground/80">{concept}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                                                        <div className="p-3 rounded-full bg-green-500/10 mb-3">
+                                                            <CheckCircle2 className="h-8 w-8 text-green-500" />
                                                         </div>
-                                                        <div className="relative">
-                                                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/60 mb-3 flex items-center gap-2">
-                                                                <MessageSquare className="h-3 w-3" /> Interviewer Feedback
-                                                            </h3>
-                                                            <p className="text-base text-foreground/90 leading-relaxed font-medium italic">
-                                                                "{evaluation.feedback}"
-                                                            </p>
-                                                        </div>
+                                                        <p className="text-sm font-medium text-green-600 dark:text-green-400">Excellent coverage!</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">No major concept gaps identified</p>
                                                     </div>
                                                 )}
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {/* Missing Concepts / Gaps */}
-                                                    <div className="bg-muted/10 border border-border/40 rounded-2xl p-6">
-                                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
-                                                            <Sparkles className="h-3 w-3 text-yellow-500" /> Key Gaps Identified
-                                                        </h3>
-                                                        <div className="space-y-3">
-                                                            {evaluation.missingConcepts.length > 0 ? (
-                                                                evaluation.missingConcepts.map((concept, i) => (
-                                                                    <div key={i} className="flex items-start gap-3 p-3 bg-card/50 rounded-xl border border-border/20">
-                                                                        <div className="mt-1 h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
-                                                                        <span className="text-sm text-foreground/80 font-medium">{concept}</span>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <div className="flex items-center gap-3 p-4 bg-green-500/5 rounded-xl border border-green-500/10">
-                                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                                    <p className="text-sm text-green-600 font-medium">Excellent! No major concept gaps found.</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Improvement Suggestions */}
-                                                    <div className="bg-muted/10 border border-border/40 rounded-2xl p-6">
-                                                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
-                                                            <Lightbulb className="h-3 w-3 text-primary" /> Roadmap to Mastery
-                                                        </h3>
-                                                        <div className="space-y-3">
-                                                            {evaluation.improvementSuggestions && evaluation.improvementSuggestions.length > 0 ? (
-                                                                evaluation.improvementSuggestions.map((suggestion, i) => (
-                                                                    <div key={i} className="flex items-start gap-3 p-3 bg-card/50 rounded-xl border border-border/20">
-                                                                        <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/40 shrink-0" />
-                                                                        <span className="text-sm text-foreground/80 font-medium">{suggestion}</span>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10">
-                                                                    <Sparkles className="h-5 w-5 text-primary" />
-                                                                    <p className="text-sm text-primary/70 font-medium">Continue following your current learning path!</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* What you said */}
-                                                <div className="bg-muted/20 rounded-2xl p-8 border border-border/40">
-                                                    <h3 className="font-bold text-[10px] uppercase tracking-widest mb-4 flex items-center gap-2 text-foreground/50">
-                                                        <Mic className="h-3 w-3" /> Your Explanation Transcript
-                                                    </h3>
-                                                    <div className="bg-card/30 rounded-xl p-6 text-[14px] text-foreground/80 leading-relaxed italic border border-border/20 shadow-inner">
-                                                        "{attempts[selectedAttemptIndex!]?.answer.rawText || attempts[selectedAttemptIndex!]?.answer.transcript}"
-                                                    </div>
-                                                </div>
                                             </div>
+                                        </div>
 
-                                            <div className="flex justify-center flex-col md:flex-row gap-4">
-                                                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-12 h-12 text-sm font-bold shadow-lg shadow-primary/10" onClick={() => {
-                                                    setStep(1);
-                                                    setAudioBlob(null);
-                                                    setRecordingTime(0);
-                                                    setTranscript("");
-                                                    setEvaluation(null);
-                                                    setSelectedAttemptIndex(null);
-                                                }}>
-                                                    Try Another Take
-                                                </Button>
+                                        {/* Improvement Suggestions */}
+                                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                            <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-primary/5 to-transparent">
+                                                <h3 className="text-sm font-semibold flex items-center gap-2">
+                                                    <div className="p-1.5 rounded-lg bg-primary/10">
+                                                        <Lightbulb className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                    Next Steps
+                                                    {evaluation.improvementSuggestions && evaluation.improvementSuggestions.length > 0 && (
+                                                        <span className="ml-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                                            {evaluation.improvementSuggestions.length} tips
+                                                        </span>
+                                                    )}
+                                                </h3>
                                             </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            ) : (
-                                <Card className="h-full border-dashed border-2 flex flex-col items-center justify-center py-32 rounded-[3rem] bg-muted/10 space-y-6">
-                                    <div className="p-6 bg-primary/5 rounded-full ring-8 ring-primary/5 animate-pulse">
-                                        <Sparkles className="h-16 w-16 text-primary" />
+                                            <div className="p-4 max-h-62.5 overflow-y-auto">
+                                                {evaluation.improvementSuggestions && evaluation.improvementSuggestions.length > 0 ? (
+                                                    <ul className="space-y-2">
+                                                        {evaluation.improvementSuggestions.map((suggestion, i) => (
+                                                            <li key={i} className="flex items-start gap-3 p-3 bg-primary/5 border border-primary/10 rounded-lg text-sm group hover:bg-primary/10 transition-colors">
+                                                                <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                                                    <span className="text-xs font-bold text-primary">{i + 1}</span>
+                                                                </div>
+                                                                <span className="text-foreground/80">{suggestion}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                                                        <div className="p-3 rounded-full bg-primary/10 mb-3">
+                                                            <Trophy className="h-8 w-8 text-primary" />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-primary">Great job!</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">Keep up the excellent work</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-3 text-center">
-                                        <h3 className="text-3xl font-black text-foreground">Evaluation Pending</h3>
-                                        <p className="text-muted-foreground max-w-sm mx-auto text-lg leading-relaxed">
-                                            We're still analyzing your technical accuracy and clarity. This usually takes 5-10 seconds.
-                                        </p>
+
+                                    {/* Your Answer - Collapsible Style */}
+                                    <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                        <div className="px-6 py-4 border-b border-border/30 flex items-center justify-between">
+                                            <h3 className="text-sm font-semibold flex items-center gap-2">
+                                                <div className="p-1.5 rounded-lg bg-muted">
+                                                    <Mic className="h-4 w-4 text-muted-foreground" />
+                                                </div>
+                                                Your Response
+                                            </h3>
+                                            <span className="text-xs text-muted-foreground">
+                                                {attempts[selectedAttemptIndex!]?.answer.rawText?.split(' ').length || 0} words
+                                            </span>
+                                        </div>
+                                        <div className="p-6 bg-muted/10">
+                                            <div className="relative">
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-primary via-primary/50 to-transparent rounded-full" />
+                                                <p className="text-sm text-foreground/80 leading-relaxed pl-4 font-mono">
+                                                    {attempts[selectedAttemptIndex!]?.answer.rawText || attempts[selectedAttemptIndex!]?.answer.transcript}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-4">
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-3">
                                         <Button
-                                            className="rounded-2xl px-10 h-14 font-black shadow-lg shadow-primary/20"
+                                            size="lg"
+                                            className="flex-1 sm:flex-none"
+                                            onClick={() => {
+                                                setStep(1);
+                                                setAudioBlob(null);
+                                                setRecordingTime(0);
+                                                setTranscript("");
+                                                setEvaluation(null);
+                                                setSelectedAttemptIndex(null);
+                                            }}
+                                        >
+                                            <RotateCcw className="h-4 w-4 mr-2" />
+                                            Try Another Take
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="flex-1 sm:flex-none"
+                                            onClick={() => navigate(-1)}
+                                        >
+                                            Back
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="border border-dashed border-border rounded-xl bg-linear-to-br from-card to-primary/5 flex flex-col items-center justify-center py-20">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+                                        <div className="relative p-4 bg-primary/10 rounded-xl mb-4">
+                                            <Sparkles className="h-10 w-10 text-primary animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-xl font-semibold mb-2">Analyzing Your Response</h3>
+                                    <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
+                                        Our AI is evaluating clarity, correctness, and depth. This usually takes 5-10 seconds.
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <Button
                                             onClick={() => {
                                                 if (selectedAttemptIndex !== null && attempts[selectedAttemptIndex]) {
                                                     handleSubmitEvaluation();
                                                 }
                                             }}
                                         >
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                             Refresh Results
                                         </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="rounded-2xl px-10 h-14 font-bold border-2"
-                                            onClick={() => navigate('/dashboard')}
-                                        >
-                                            Go Help Others
+                                        <Button variant="outline" onClick={() => navigate(-1)}>
+                                            Back
                                         </Button>
                                     </div>
-                                </Card>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -686,17 +792,77 @@ const AudioVisualizer = ({ analyser, isRecording }: { analyser: AnalyserNode | n
     );
 };
 
-const ScoreCard = ({ label, score, color }: { label: string, score: number, color: 'blue' | 'green' | 'purple' }) => {
+const ScoreCard = ({ label, score, color }: { label: string, score: number, color: 'blue' | 'green' | 'purple', icon?: string }) => {
     const colors = {
-        blue: 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/50',
-        green: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/50',
-        purple: 'text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/50'
+        blue: {
+            bg: 'bg-blue-500/10',
+            text: 'text-blue-600 dark:text-blue-400',
+            border: 'border-blue-500/20',
+            ring: 'ring-blue-500/20'
+        },
+        green: {
+            bg: 'bg-green-500/10',
+            text: 'text-green-600 dark:text-green-400',
+            border: 'border-green-500/20',
+            ring: 'ring-green-500/20'
+        },
+        purple: {
+            bg: 'bg-purple-500/10',
+            text: 'text-purple-600 dark:text-purple-400',
+            border: 'border-purple-500/20',
+            ring: 'ring-purple-500/20'
+        }
+    };
+
+    const getScoreLevel = (s: number) => {
+        if (s >= 8) return 'Excellent';
+        if (s >= 6) return 'Good';
+        if (s >= 4) return 'Fair';
+        return 'Needs Work';
     };
 
     return (
-        <div className={cn("p-6 rounded-2xl border text-center space-y-1", colors[color])}>
-            <p className="text-3xl font-bold tracking-tight">{score}/10</p>
-            <p className="font-bold uppercase tracking-widest text-[9px] opacity-60 italic">{label}</p>
+        <div className={cn(
+            "relative border rounded-xl p-5 text-center transition-all hover:scale-[1.02] cursor-default",
+            colors[color].border,
+            colors[color].bg
+        )}>
+            <div className={cn(
+                "w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ring-4",
+                "bg-background",
+                colors[color].ring
+            )}>
+                <span className={cn("text-2xl font-bold", colors[color].text)}>{score}</span>
+            </div>
+            <p className={cn("text-sm font-semibold mb-1", colors[color].text)}>{label}</p>
+            <p className="text-xs text-muted-foreground">{getScoreLevel(score)}</p>
+        </div>
+    );
+};
+
+const ScoreBar = ({ label, score, color }: { label: string, score: number, color: 'blue' | 'green' | 'purple' }) => {
+    const colors = {
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        purple: 'bg-purple-500'
+    };
+
+    const bgColors = {
+        blue: 'bg-blue-500/20',
+        green: 'bg-green-500/20',
+        purple: 'bg-purple-500/20'
+    };
+
+    return (
+        <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground w-24 shrink-0">{label}</span>
+            <div className={cn("flex-1 h-2 rounded-full overflow-hidden", bgColors[color])}>
+                <div
+                    className={cn("h-full rounded-full transition-all duration-1000 ease-out", colors[color])}
+                    style={{ width: `${score * 10}%` }}
+                />
+            </div>
+            <span className="text-xs font-medium text-foreground w-8 text-right">{score}/10</span>
         </div>
     );
 };

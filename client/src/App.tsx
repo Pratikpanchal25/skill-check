@@ -10,6 +10,7 @@ import SkillSessionRecordings from './pages/SkillSessionRecordings';
 import SkillSessionAttempts from './pages/SkillSessionAttempts';
 import { Profile } from './pages/Profile';
 import { ManageAccount } from './pages/ManageAccount';
+import { AllSessions } from './pages/AllSessions';
 import { ThemeProvider } from './components/theme-provider';
 
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -71,6 +72,7 @@ function AppContent() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="skillcheck" element={<SkillCheck />} />
+          <Route path="sessions" element={<AllSessions />} />
           <Route path="session/:id" element={<SkillSessionAttempts />} />
           <Route path="session/:id/record" element={<SkillSessionRecordings />} />
           <Route path="session/:id/attempts" element={<SkillSessionAttempts />} />

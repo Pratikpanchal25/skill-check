@@ -1,6 +1,7 @@
 import { Judgement } from "../models/judgement.model";
 import { UserAnswer } from "../models/user.answer.model";
 import { SkillCheckSession } from "../models/skill.check.session.model";
+import { VoiceMetrics } from "../models/voice.metrics.model";
 import { evaluateAnswer } from "./llm.service";
 
 export const evaluateSession = async (sessionId: string, answerId?: string) => {
@@ -26,8 +27,25 @@ export const evaluateSession = async (sessionId: string, answerId?: string) => {
     // Get skill name for context
     const skillName = session.skillName || "Unknown Skill";
 
-    // Call LLM service for evaluation
-    const aiResult = await evaluateAnswer(answer.rawText || answer.transcript || "", skillName);
+    // Fetch voice metrics if available (for voice input type)
+    let voiceMetricsData;
+    if (session.inputType === "voice") {
+        const metrics = await VoiceMetrics.findOne({ sessionId }).sort({ createdAt: -1 });
+        if (metrics) {
+            voiceMetricsData = {
+                wpm: metrics.wpm ?? undefined,
+                fillerWords: metrics.fillerWords ?? undefined,
+                longPauses: metrics.longPauses ?? undefined
+            };
+        }
+    }
+
+    // Call LLM service for evaluation with voice metrics
+    const aiResult = await evaluateAnswer(
+        answer.rawText || answer.transcript || "", 
+        skillName,
+        voiceMetricsData
+    );
 
     // Create evaluation with model version
     const evaluation = new Judgement({
@@ -36,11 +54,13 @@ export const evaluateSession = async (sessionId: string, answerId?: string) => {
         clarity: aiResult.clarity,
         correctness: aiResult.correctness,
         depth: aiResult.depth,
+        delivery: aiResult.delivery,
         missingConcepts: aiResult.missingConcepts,
         reaction: aiResult.reaction,
         feedback: aiResult.feedback,
         improvementSuggestions: aiResult.improvementSuggestions,
-        modelVersion: "gemini-2.0-flash" // Update with actual version
+        deliveryFeedback: aiResult.deliveryFeedback,
+        modelVersion: "gemini-2.5-flash"
     });
 
     return await evaluation.save();

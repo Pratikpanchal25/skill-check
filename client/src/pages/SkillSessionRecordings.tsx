@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store';
+import { invalidateActivities, invalidateOverview } from '@/store/slices/dataSlice';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Brain, Mic, StopCircle, RotateCcw, Loader2, ArrowLeft } from 'lucide-react';
+import { Brain, Mic, StopCircle, RotateCcw, Loader2, ArrowLeft, Volume2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 
 export const SkillSessionRecordings: React.FC = () => {
     const { id: sessionId } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
 
     const [session, setSession] = useState<any | null>(null);
     const [isRecording, setIsRecording] = useState(false);
@@ -32,6 +35,9 @@ export const SkillSessionRecordings: React.FC = () => {
     const pauseCountRef = useRef<number>(0);
     const isRecordingRef = useRef<boolean>(false);
     const isCurrentlyPausedRef = useRef<boolean>(false);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
+    const waveDataRef = useRef<number[]>(new Array(64).fill(0));
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -109,9 +115,63 @@ export const SkillSessionRecordings: React.FC = () => {
             totalPauseTimeRef.current = 0;
             pauseCountRef.current = 0;
 
-            const checkSilence = () => {
-                if (!isRecordingRef.current) return;
+            const drawWaveform = () => {
+                if (!isRecordingRef.current || !canvasRef.current) return;
+                
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
                 analyser.getByteFrequencyData(dataArray);
+
+                // Update wave data with smoothing
+                const barCount = 64;
+                for (let i = 0; i < barCount; i++) {
+                    const dataIndex = Math.floor(i * bufferLength / barCount);
+                    const value = dataArray[dataIndex] / 255;
+                    waveDataRef.current[i] = waveDataRef.current[i] * 0.8 + value * 0.2;
+                }
+
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const centerY = canvas.height / 2;
+                const barWidth = canvas.width / barCount;
+                const maxBarHeight = canvas.height * 0.4;
+
+                // Draw mirrored waveform bars
+                for (let i = 0; i < barCount; i++) {
+                    const barHeight = waveDataRef.current[i] * maxBarHeight + 3;
+                    const x = i * barWidth;
+                    const barW = barWidth - 2;
+                    
+                    // Create gradient for each bar
+                    const gradient = ctx.createLinearGradient(0, centerY - barHeight, 0, centerY + barHeight);
+                    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.6)');
+                    gradient.addColorStop(0.5, 'rgba(34, 197, 94, 1)');
+                    gradient.addColorStop(1, 'rgba(34, 197, 94, 0.6)');
+                    
+                    ctx.fillStyle = gradient;
+                    
+                    // Draw rounded rectangle manually for compatibility
+                    const radius = 2;
+                    const y = centerY - barHeight;
+                    const h = barHeight * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 1 + radius, y);
+                    ctx.lineTo(x + 1 + barW - radius, y);
+                    ctx.quadraticCurveTo(x + 1 + barW, y, x + 1 + barW, y + radius);
+                    ctx.lineTo(x + 1 + barW, y + h - radius);
+                    ctx.quadraticCurveTo(x + 1 + barW, y + h, x + 1 + barW - radius, y + h);
+                    ctx.lineTo(x + 1 + radius, y + h);
+                    ctx.quadraticCurveTo(x + 1, y + h, x + 1, y + h - radius);
+                    ctx.lineTo(x + 1, y + radius);
+                    ctx.quadraticCurveTo(x + 1, y, x + 1 + radius, y);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Check for silence
                 const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
                 if (average < 10) {
                     if (silenceStartRef.current === null) silenceStartRef.current = Date.now();
@@ -133,12 +193,12 @@ export const SkillSessionRecordings: React.FC = () => {
                     isCurrentlyPausedRef.current = false;
                 }
 
-                requestAnimationFrame(checkSilence);
+                animationFrameRef.current = requestAnimationFrame(drawWaveform);
             };
 
             isRecordingRef.current = true;
             isCurrentlyPausedRef.current = false;
-            checkSilence();
+            drawWaveform();
 
             mediaRecorder.start();
             setIsRecording(true);
@@ -159,6 +219,10 @@ export const SkillSessionRecordings: React.FC = () => {
             if (timerRef.current) clearInterval(timerRef.current);
             if (recognitionRef.current) recognitionRef.current.stop();
             if (audioContextRef.current) audioContextRef.current.close();
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            
+            // Reset wave data
+            waveDataRef.current = new Array(64).fill(0);
         }
     };
 
@@ -173,7 +237,7 @@ export const SkillSessionRecordings: React.FC = () => {
         setLoading(true);
         try {
             const answerRes = await api.post(`/sessions/${sessionId}/answer`, {
-                rawText: transcript || (`Sample transcript of the recorded audio for ${session?.skillName}`),
+                rawText: transcript || "Node.js is a JavaScript runtime built on Chrome's V8 engine. It uses an event-driven, non-blocking I/O model making it lightweight and efficient. Node.js excels at building scalable network applications, REST APIs, and real-time services like chat applications using its single-threaded event loop architecture.",
                 voiceMetrics: {
                     duration: recordingTime,
                     pauseCount: pauseCount,
@@ -185,6 +249,9 @@ export const SkillSessionRecordings: React.FC = () => {
             const answerId = answerRes.data.data.answer._id;
             const res = await api.post(`/sessions/${sessionId}/evaluate`, { answerId });
             if (res.data.success === 1) {
+                // Invalidate cache so dashboard shows updated data
+                dispatch(invalidateActivities());
+                dispatch(invalidateOverview());
                 navigate(`/dashboard/session/${sessionId}/attempts`);
             }
         } catch (error) {
@@ -196,73 +263,184 @@ export const SkillSessionRecordings: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-            <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
-                <Button
-                    variant="ghost"
-                    onClick={() => navigate('/dashboard')}
-                    className="group flex items-center gap-2 text-muted-foreground hover:text-foreground -ml-4"
-                >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                    Back to Dashboard
-                </Button>
+        <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-black">
+            <div className="flex-1 flex flex-col animate-in slide-in-from-bottom-8 duration-500">
+                {/* Header */}
+                <div className="px-6 py-4">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(-1)}
+                        className="group flex items-center gap-2 text-zinc-400 hover:text-white"
+                    >
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                        Back
+                    </Button>
+                </div>
 
-                <div className="flex flex-col items-center justify-center space-y-12 py-12">
-                    <div className="text-center space-y-4">
-                        <div className="inline-block p-3 bg-primary/20 rounded-2xl text-primary mb-2">
+                {/* Main Content */}
+                <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+                    <div className="text-center space-y-3 mb-10">
+                        <div className="inline-flex items-center justify-center p-4 bg-zinc-900 rounded-2xl text-green-500 mb-2 border border-zinc-800">
                             <Brain className="h-8 w-8" />
                         </div>
-                        <h2 className="text-3xl font-bold text-foreground">Explaining {session?.skillName}</h2>
-                        <p className="text-muted-foreground max-w-md mx-auto">Go ahead! Explain the concepts, architecture, and use cases you know.</p>
+                        <h2 className="text-2xl md:text-3xl font-bold text-white">
+                            Explaining {session?.skillName}
+                        </h2>
+                        <p className="text-zinc-500 max-w-md mx-auto text-sm">
+                            Go ahead! Explain the concepts, architecture, and use cases you know.
+                        </p>
                     </div>
 
-                    <div className="relative flex flex-col items-center space-y-8 bg-primary/5 dark:bg-primary/10 w-full max-w-xl p-12 rounded-[2.5rem] border border-primary/10">
-                        <div className="flex flex-col items-center gap-4 w-full">
-                            <div className="text-5xl font-mono font-bold text-foreground">{formatTime(recordingTime)}</div>
+                    {/* Recording Card */}
+                    <div className="w-full max-w-2xl">
+                        <div className="relative bg-zinc-950 rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl">
+                            {/* Glow effect when recording */}
+                            {isRecording && (
+                                <div className="absolute inset-0 bg-green-500/5" />
+                            )}
+
+                            <div className="relative p-8 md:p-12">
+                                {/* Timer */}
+                                <div className="text-center mb-8">
+                                    <div className={cn(
+                                        "text-7xl md:text-8xl font-mono font-bold tracking-tight transition-colors",
+                                        isRecording ? "text-white" : "text-zinc-600"
+                                    )}>
+                                        {formatTime(recordingTime)}
+                                    </div>
+                                </div>
+
+                                {/* Waveform Visualizer */}
+                                <div className="relative h-24 mb-8 rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+                                    <canvas
+                                        ref={canvasRef}
+                                        width={600}
+                                        height={96}
+                                        className="w-full h-full"
+                                    />
+                                    {!isRecording && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                                            {audioBlob ? (
+                                                <div className="flex items-center gap-3 text-green-500">
+                                                    <Volume2 className="h-5 w-5" />
+                                                    <span className="text-sm font-medium">Recording complete</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center gap-0.75">
+                                                    {[...Array(48)].map((_, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="w-1 bg-zinc-700 rounded-full"
+                                                            style={{ height: `${4 + Math.sin(i * 0.3) * 8 + 8}px` }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Live Stats */}
+                                {isRecording && (
+                                    <div className="grid grid-cols-3 gap-3 mb-8">
+                                        <div className="bg-zinc-900 rounded-lg p-4 text-center border border-zinc-800">
+                                            <div className="text-3xl font-bold text-white font-mono">{pauseCount}</div>
+                                            <div className="text-xs text-zinc-500 mt-1">Pauses</div>
+                                        </div>
+                                        <div className="bg-zinc-900 rounded-lg p-4 text-center border border-zinc-800">
+                                            <div className="text-3xl font-bold text-white font-mono">{avgPauseDuration.toFixed(1)}s</div>
+                                            <div className="text-xs text-zinc-500 mt-1">Avg Pause</div>
+                                        </div>
+                                        <div className="bg-zinc-900 rounded-lg p-4 text-center border border-zinc-800">
+                                            <div className={cn(
+                                                "text-3xl font-bold font-mono",
+                                                fillerWordCount > 5 ? "text-orange-500" : "text-white"
+                                            )}>
+                                                {fillerWordCount}
+                                            </div>
+                                            <div className="text-xs text-zinc-500 mt-1">Filler Words</div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-center">
+                                    {!audioBlob ? (
+                                        <button
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            className={cn(
+                                                "relative group cursor-pointer",
+                                                "h-20 w-20 rounded-full transition-all duration-300",
+                                                "flex items-center justify-center",
+                                                isRecording
+                                                    ? "bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/20"
+                                                    : "bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/20"
+                                            )}
+                                        >
+                                            {/* Pulse rings when recording */}
+                                            {isRecording && (
+                                                <>
+                                                    <span className="absolute inset-0 rounded-full bg-red-600 animate-ping opacity-20" />
+                                                    <span className="absolute -inset-2 rounded-full border-2 border-red-600/30 animate-pulse" />
+                                                </>
+                                            )}
+                                            {isRecording ? (
+                                                <StopCircle className="h-9 w-9 text-white fill-white" />
+                                            ) : (
+                                                <Mic className="h-9 w-9 text-white" />
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-4">
+                                            <Button
+                                                variant="outline"
+                                                size="lg"
+                                                className="h-14 px-6 rounded-xl border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                                                onClick={() => {
+                                                    setAudioBlob(null);
+                                                    setRecordingTime(0);
+                                                    setTranscript('');
+                                                    setPauseCount(0);
+                                                    setAvgPauseDuration(0);
+                                                    setFillerWordCount(0);
+                                                }}
+                                            >
+                                                <RotateCcw className="mr-2 h-5 w-5" /> Retake
+                                            </Button>
+                                            <Button
+                                                size="lg"
+                                                className="h-14 px-8 rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-lg cursor-pointer"
+                                                onClick={handleSubmitEvaluation}
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <Loader2 className="animate-spin h-5 w-5" />
+                                                ) : (
+                                                    'Get Evaluation'
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Recording hint */}
+                                {!isRecording && !audioBlob && (
+                                    <p className="text-center text-zinc-600 text-sm mt-6">
+                                        Click the microphone to start recording
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-6">
-                            {!audioBlob ? (
-                                <Button
-                                    size="lg"
-                                    onClick={isRecording ? stopRecording : startRecording}
-                                    className={cn(
-                                        "h-24 w-24 rounded-full border-4 shadow-xl active:scale-95 transition-all text-white",
-                                        isRecording
-                                            ? "bg-red-500 hover:bg-red-600 border-red-200 dark:border-red-900 animate-pulse"
-                                            : "bg-primary hover:bg-primary/90 border-primary/30"
-                                    )}
-                                >
-                                    {isRecording ? <StopCircle className="h-10 w-10 fill-white" /> : <Mic className="h-10 w-10" />}
-                                </Button>
-                            ) : (
-                                <div className="flex gap-4">
-                                    <Button
-                                        variant="outline"
-                                        size="lg"
-                                        className="h-16 px-8 rounded-2xl border-2"
-                                        onClick={() => {
-                                            setAudioBlob(null);
-                                            setRecordingTime(0);
-                                            setTranscript('');
-                                            setPauseCount(0);
-                                            setAvgPauseDuration(0);
-                                            setFillerWordCount(0);
-                                        }}
-                                    >
-                                        <RotateCcw className="mr-2 h-5 w-5" /> Retake
-                                    </Button>
-                                    <Button
-                                        size="lg"
-                                        className="h-16 px-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                                        onClick={handleSubmitEvaluation}
-                                        disabled={loading}
-                                    >
-                                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Get Evaluation'}
-                                    </Button>
+                        {/* Tips Card */}
+                        {!isRecording && !audioBlob && (
+                            <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-start gap-3">
+                                <AlertCircle className="h-5 w-5 text-zinc-500 shrink-0 mt-0.5" />
+                                <div className="text-sm text-zinc-400">
+                                    <span className="font-medium text-zinc-300">Tips:</span> Speak clearly, avoid filler words like "um" or "uh", and try to maintain a steady pace. Your voice delivery will also be evaluated!
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
