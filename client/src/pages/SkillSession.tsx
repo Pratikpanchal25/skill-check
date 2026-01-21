@@ -12,6 +12,9 @@ import {
     Loader2,
     Trophy,
     ArrowLeft,
+    BookOpen,
+    Target,
+    Zap,
     Lightbulb,
     MessageSquare,
     CheckCircle2
@@ -45,6 +48,41 @@ interface Attempt {
     };
     evaluation: EvaluationResult | null;
 }
+
+type Difficulty = 'beginner' | 'intermediate' | 'advanced';
+
+const takeDifficultyConfig: Record<
+    Difficulty,
+    {
+        label: string;
+        description: string;
+        icon: typeof BookOpen;
+        className: string;
+        activeClassName: string;
+    }
+> = {
+    beginner: {
+        label: 'Beginner',
+        description: 'Fundamentals',
+        icon: BookOpen,
+        className: 'border-border hover:border-green-500/40',
+        activeClassName: 'border-green-500/60 bg-green-500/10'
+    },
+    intermediate: {
+        label: 'Intermediate',
+        description: 'Applied',
+        icon: Target,
+        className: 'border-border hover:border-yellow-500/40',
+        activeClassName: 'border-yellow-500/60 bg-yellow-500/10'
+    },
+    advanced: {
+        label: 'Advanced',
+        description: 'Deep dive',
+        icon: Zap,
+        className: 'border-border hover:border-red-500/40',
+        activeClassName: 'border-red-500/60 bg-red-500/10'
+    }
+};
 
 interface SpeechRecognitionEvent {
     results: {
@@ -83,6 +121,7 @@ export const SkillSession: React.FC = () => {
     const [pauseCount, setPauseCount] = useState(0);
     const [avgPauseDuration, setAvgPauseDuration] = useState(0);
     const [fillerWordCount, setFillerWordCount] = useState(0);
+    const [takeDifficulty, setTakeDifficulty] = useState<Difficulty | null>(null);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -124,6 +163,10 @@ export const SkillSession: React.FC = () => {
     }, [sessionId, navigate]);
 
     const startRecording = async () => {
+        if (!takeDifficulty) {
+            toast.error('Select a difficulty to start this take');
+            return;
+        }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -334,6 +377,52 @@ export const SkillSession: React.FC = () => {
                                 </p>
                             </div>
 
+                            {/* Difficulty (required per take) */}
+                            <div className="w-full max-w-xl border border-border/50 bg-card rounded-xl p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p className="text-sm font-semibold">Select difficulty for this take</p>
+                                        <p className="text-xs text-muted-foreground">Required before you start recording</p>
+                                    </div>
+                                    {takeDifficulty && (
+                                        <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20">
+                                            {takeDifficulty}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {(Object.keys(takeDifficultyConfig) as Difficulty[]).map((d) => {
+                                        const cfg = takeDifficultyConfig[d];
+                                        const Icon = cfg.icon;
+                                        const active = takeDifficulty === d;
+                                        return (
+                                            <button
+                                                key={d}
+                                                type="button"
+                                                onClick={() => setTakeDifficulty(d)}
+                                                className={cn(
+                                                    'p-4 rounded-lg border transition-all text-left cursor-pointer',
+                                                    active ? cfg.activeClassName : cfg.className
+                                                )}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={cn(
+                                                        'p-2 rounded-md border',
+                                                        active ? 'border-primary/30 bg-background' : 'border-border bg-muted/20'
+                                                    )}>
+                                                        <Icon className="h-4 w-4" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold">{cfg.label}</p>
+                                                        <p className="text-xs text-muted-foreground">{cfg.description}</p>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             {/* Recording Visualizer Block */}
                             <div className="relative flex flex-col items-center space-y-8 border border-border/50 bg-card w-full max-w-xl p-12 rounded-xl shadow-sm">
                                 <div className="flex flex-col items-center gap-4 w-full">
@@ -354,6 +443,7 @@ export const SkillSession: React.FC = () => {
                                         <Button
                                             size="lg"
                                             onClick={isRecording ? stopRecording : startRecording}
+                                            disabled={!takeDifficulty}
                                             className={cn(
                                                 "h-24 w-24 rounded-full border-4 shadow-xl active:scale-95 transition-all text-white",
                                                 isRecording
@@ -450,6 +540,7 @@ export const SkillSession: React.FC = () => {
                                             setTranscript("");
                                             setEvaluation(null);
                                             setSelectedAttemptIndex(null);
+                                            setTakeDifficulty(null);
                                         }}
                                     >
                                         <RotateCcw className="h-3 w-3 mr-1" /> New
@@ -671,6 +762,7 @@ export const SkillSession: React.FC = () => {
                                                 setTranscript("");
                                                 setEvaluation(null);
                                                 setSelectedAttemptIndex(null);
+                                                setTakeDifficulty(null);
                                             }}
                                         >
                                             <RotateCcw className="h-4 w-4 mr-2" />
@@ -679,9 +771,10 @@ export const SkillSession: React.FC = () => {
                                         <Button
                                             variant="outline"
                                             size="lg"
-                                            className="flex-1 sm:flex-none"
+                                            className="flex-1 sm:flex-none gap-2"
                                             onClick={() => navigate(-1)}
                                         >
+                                            <ArrowLeft className="h-4 w-4" />
                                             Back
                                         </Button>
                                     </div>
@@ -709,7 +802,8 @@ export const SkillSession: React.FC = () => {
                                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                             Refresh Results
                                         </Button>
-                                        <Button variant="outline" onClick={() => navigate(-1)}>
+                                        <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+                                            <ArrowLeft className="h-4 w-4" />
                                             Back
                                         </Button>
                                     </div>

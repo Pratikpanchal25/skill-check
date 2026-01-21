@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
-import { fetchSkills, invalidateActivities, invalidateOverview } from '@/store/slices/dataSlice';
+import { fetchActivities, fetchSkills, invalidateActivities, invalidateOverview } from '@/store/slices/dataSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,8 @@ import {
     ArrowLeft,
     Mic,
     Sparkles,
+    Clock,
+    Lock,
     Target,
     Zap,
     BookOpen,
@@ -60,7 +62,7 @@ export const SkillCheck: React.FC = () => {
     const user = useSelector((state: RootState) => state.auth.user);
     
     // Get skills from Redux store
-    const { skills, skillsLoading } = useSelector((state: RootState) => state.data);
+    const { skills, skillsLoading, activities } = useSelector((state: RootState) => state.data);
 
     const [loading, setLoading] = useState(false);
     const [selectedSkill, setSelectedSkill] = useState<{ _id: string; name: string; category?: string } | null>(null);
@@ -71,6 +73,12 @@ export const SkillCheck: React.FC = () => {
     useEffect(() => {
         dispatch(fetchSkills());
     }, [dispatch]);
+
+    useEffect(() => {
+        // Used only to prevent duplicate in-progress sessions.
+        // Cached by dataSlice, so this won't spam the API.
+        if (user?._id) dispatch(fetchActivities(false));
+    }, [user?._id, dispatch]);
 
     // Set first skill as selected when skills load
     useEffect(() => {
@@ -93,6 +101,21 @@ export const SkillCheck: React.FC = () => {
         }
 
         if (!skillToUse) return;
+
+        const normalized = skillToUse.name.trim().toLowerCase();
+        const existingPending = activities.reduce<{ id: string; createdAt: string; evaluated: boolean } | null>((acc, a) => {
+            if (a.skill.trim().toLowerCase() !== normalized) return acc;
+            if (a.evaluated) return acc;
+            if (!acc) return { id: a.id, createdAt: a.createdAt, evaluated: a.evaluated };
+            return Date.parse(a.createdAt) > Date.parse(acc.createdAt)
+                ? { id: a.id, createdAt: a.createdAt, evaluated: a.evaluated }
+                : acc;
+        }, null);
+
+        if (existingPending) {
+            toast.error(`You already have an in-progress session for “${skillToUse.name}”.`);
+            return;
+        }
 
         if (!user || !user._id) {
             toast.error('Please log in again.');
@@ -124,6 +147,22 @@ export const SkillCheck: React.FC = () => {
 
     const selectedTopicName = isCustomTopic ? customTopicName : selectedSkill?.name;
     const isReady = (isCustomTopic && customTopicName.trim()) || (!isCustomTopic && selectedSkill);
+
+    const normalizedSelectedTopic = (selectedTopicName ?? '').trim().toLowerCase();
+    const existingPendingSession = normalizedSelectedTopic
+        ? activities.reduce<{ id: string; createdAt: string } | null>((acc, a) => {
+              if (a.skill.trim().toLowerCase() !== normalizedSelectedTopic) return acc;
+              if (a.evaluated) return acc;
+              if (!acc) return { id: a.id, createdAt: a.createdAt };
+              return Date.parse(a.createdAt) > Date.parse(acc.createdAt) ? { id: a.id, createdAt: a.createdAt } : acc;
+          }, null)
+        : null;
+
+    const startDisabledReason = existingPendingSession
+        ? 'You already have an in-progress session for this topic.'
+        : !isReady
+            ? 'Pick a topic to continue.'
+            : null;
 
     return (
         <div className="bg-background overflow-hidden">
@@ -321,7 +360,8 @@ export const SkillCheck: React.FC = () => {
                             className="w-full mt-6"
                             size="lg"
                             onClick={handleStartSession}
-                            disabled={loading || !isReady}
+                            disabled={loading || !isReady || Boolean(existingPendingSession)}
+                            title={startDisabledReason ?? undefined}
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin h-4 w-4 mr-2" />
@@ -330,6 +370,35 @@ export const SkillCheck: React.FC = () => {
                             )}
                             {loading ? 'Starting...' : 'Start Skill Check'}
                         </Button>
+
+                        {existingPendingSession && (
+                            <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-0.5 p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                        <Lock className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium text-foreground">
+                                            Session already in progress
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                            You can’t start another session for this topic until you finish the current one.
+                                        </p>
+                                        <div className="mt-3">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8"
+                                                onClick={() => navigate(`/dashboard/session/${existingPendingSession.id}/record`)}
+                                            >
+                                                Continue Session
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* How it works */}

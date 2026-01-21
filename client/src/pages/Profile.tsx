@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchOverview } from '@/store/slices/dataSlice';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Briefcase, Calendar, ShieldCheck, ArrowLeft, Mic, TrendingUp, Settings } from 'lucide-react';
+import { User, Mail, Briefcase, Calendar, ShieldCheck, ArrowLeft, ArrowRight, Mic, TrendingUp, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -146,9 +146,15 @@ export const Profile: React.FC = () => {
                                 <h3 className="text-sm font-semibold">Skill Proficiency</h3>
                                 <p className="text-xs text-muted-foreground mt-1">Your performance across all skills</p>
                             </div>
-                            <button onClick={() => navigate(-1)} className="text-xs font-medium text-primary hover:underline">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate('/dashboard/sessions')}
+                                className="h-8 px-2 text-xs text-primary hover:text-primary"
+                            >
                                 View Sessions
-                            </button>
+                                <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                            </Button>
                         </div>
                         <div className="p-6 overflow-y-auto flex-1 min-h-0 thin-scrollbar">
                             {loading ? (
