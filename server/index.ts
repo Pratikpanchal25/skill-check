@@ -19,10 +19,10 @@ app.use(
     origin: "*",
   }),
 );
-app.use("/users", userRoutes);
-app.use("/sessions", sessionRoutes);
-app.use("/skills", skillRoutes);
-app.use("/analytics", analyticsRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/skills", skillRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Skillcheck API is running");

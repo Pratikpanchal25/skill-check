@@ -19,10 +19,10 @@ app.use(express_1.default.json());
 app.use((0, cors_1.default)({
     origin: "*",
 }));
-app.use("/users", user_routes_1.default);
-app.use("/sessions", session_routes_1.default);
-app.use("/skills", skill_routes_1.default);
-app.use("/analytics", analytics_routes_1.default);
+app.use("/api/users", user_routes_1.default);
+app.use("/api/sessions", session_routes_1.default);
+app.use("/api/skills", skill_routes_1.default);
+app.use("/api/analytics", analytics_routes_1.default);
 app.get("/", (req, res) => {
     res.send("Skillcheck API is running");
 });
