@@ -36,14 +36,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getProgress = getProgress;
 exports.getSkillGaps = getSkillGaps;
 exports.getReadinessScore = getReadinessScore;
-const index_1 = require("../types/index");
-const index_2 = require("../utils/index");
+const index_1 = require("../utils/index");
 const AnalyticsService = __importStar(require("../services/analytics.service"));
 async function getProgress(req, res) {
     try {
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_1.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const progress = await AnalyticsService.getUserProgress(userId);
@@ -51,19 +50,19 @@ async function getProgress(req, res) {
             success: true,
             progress
         };
-        (0, index_2.successResponse)(res, data, 'Progress retrieved successfully');
+        (0, index_1.successResponse)(res, data, 'Progress retrieved successfully');
         return;
     }
     catch (error) {
-        (0, index_2.catchResponse)(res, error, 'Failed to retrieve progress');
+        (0, index_1.catchResponse)(res, error, 'Failed to retrieve progress');
         return;
     }
 }
 async function getSkillGaps(req, res) {
     try {
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_1.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const skillGaps = await AnalyticsService.getUserSkillGaps(userId);
@@ -71,19 +70,19 @@ async function getSkillGaps(req, res) {
             success: true,
             skillGaps
         };
-        (0, index_2.successResponse)(res, data, 'Skill gaps retrieved successfully');
+        (0, index_1.successResponse)(res, data, 'Skill gaps retrieved successfully');
         return;
     }
     catch (error) {
-        (0, index_2.catchResponse)(res, error, 'Failed to retrieve skill gaps');
+        (0, index_1.catchResponse)(res, error, 'Failed to retrieve skill gaps');
         return;
     }
 }
 async function getReadinessScore(req, res) {
     try {
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_1.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const readinessScore = await AnalyticsService.getUserReadinessScore(userId);
@@ -91,11 +90,11 @@ async function getReadinessScore(req, res) {
             success: true,
             readinessScore
         };
-        (0, index_2.successResponse)(res, data, 'Readiness score retrieved successfully');
+        (0, index_1.successResponse)(res, data, 'Readiness score retrieved successfully');
         return;
     }
     catch (error) {
-        (0, index_2.catchResponse)(res, error, 'Failed to retrieve readiness score');
+        (0, index_1.catchResponse)(res, error, 'Failed to retrieve readiness score');
         return;
     }
 }

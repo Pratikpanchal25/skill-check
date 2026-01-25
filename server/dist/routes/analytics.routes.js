@@ -35,8 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const AnalyticsController = __importStar(require("../controller/analytics.controller"));
+const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
-router.get("/progress", AnalyticsController.getProgress);
-router.get("/skill-gaps", AnalyticsController.getSkillGaps);
-router.get("/readiness-score", AnalyticsController.getReadinessScore);
+router.get("/progress", auth_middleware_1.auth, AnalyticsController.getProgress);
+router.get("/skill-gaps", auth_middleware_1.auth, AnalyticsController.getSkillGaps);
+router.get("/readiness-score", auth_middleware_1.auth, AnalyticsController.getReadinessScore);
 exports.default = router;

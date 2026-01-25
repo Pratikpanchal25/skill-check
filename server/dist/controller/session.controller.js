@@ -49,6 +49,12 @@ async function createSession(req, res) {
             (0, index_2.errorResponseWithStatusCode)(res, errorMessage, index_1.HTTP_BAD_REQUEST_400);
             return;
         }
+        if (!req.user?._id) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
+        // Override userId from body with authenticated userId for security
+        value.userId = req.user._id.toString();
         const session = await SessionService.createSession(value);
         const data = {
             success: true,
@@ -64,6 +70,10 @@ async function createSession(req, res) {
 }
 async function submitAnswer(req, res) {
     try {
+        if (!req.user?._id) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
         // Validate params
         const paramsValidation = session_validation_1.sessionIdSchema.validate(req.params);
         if (paramsValidation.error) {
@@ -95,6 +105,10 @@ async function submitAnswer(req, res) {
 }
 async function getSessionById(req, res) {
     try {
+        if (!req.user?._id) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
         const { error, value } = session_validation_1.sessionIdSchema.validate(req.params);
         if (error) {
             const errorMessage = error.details[0].message;
@@ -121,6 +135,10 @@ async function getSessionById(req, res) {
 }
 async function getSessionSummary(req, res) {
     try {
+        if (!req.user?._id) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
         const { error, value } = session_validation_1.sessionIdSchema.validate(req.params);
         if (error) {
             const errorMessage = error.details[0].message;

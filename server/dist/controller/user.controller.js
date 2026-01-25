@@ -133,21 +133,19 @@ async function login(req, res) {
 }
 async function getMe(req, res) {
     try {
-        // Note: In production, this would use req.user from auth middleware
-        // For now, using userId from query as placeholder
-        const { userId } = req.query;
-        if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+        const currentUser = req.user;
+        if (!currentUser) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
-        const user = await user_model_1.User.findById(userId).select('-password -token').lean();
-        if (!user) {
+        const userDetails = await user_model_1.User.findById(currentUser._id).select('-password -token').lean();
+        if (!userDetails) {
             (0, index_2.errorResponse)(res, 'User not found');
             return;
         }
         const data = {
             success: true,
-            user
+            user: userDetails
         };
         (0, index_2.successResponse)(res, data, 'User retrieved successfully');
         return;
@@ -165,11 +163,9 @@ async function updateMe(req, res) {
             (0, index_2.errorResponseWithStatusCode)(res, errorMessage, index_1.HTTP_BAD_REQUEST_400);
             return;
         }
-        // Note: In production, get userId from req.user (auth middleware)
-        // For now, using query param as placeholder
-        const userId = req.query.userId;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const updatedUser = await user_model_1.User.findByIdAndUpdate(userId, { $set: value }, { new: true }).select('-password -token').lean();
@@ -191,9 +187,9 @@ async function updateMe(req, res) {
 }
 async function getOverview(req, res) {
     try {
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const overview = await UserService.getUserOverview(userId);
@@ -211,15 +207,15 @@ async function getOverview(req, res) {
 }
 async function getActivity(req, res) {
     try {
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
-        const activity = await UserService.getUserActivity(userId);
+        const activities = await UserService.getUserActivity(userId);
         const data = {
             success: true,
-            activity
+            activities
         };
         (0, index_2.successResponse)(res, data, 'User activity retrieved successfully');
         return;
@@ -231,10 +227,9 @@ async function getActivity(req, res) {
 }
 async function deleteMe(req, res) {
     try {
-        // Note: In production, get userId from req.user (auth middleware)
-        const { userId } = req.query;
+        const userId = req.user?._id;
         if (!userId) {
-            (0, index_2.errorResponseWithStatusCode)(res, 'User ID required', index_1.HTTP_BAD_REQUEST_400);
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
             return;
         }
         const deletedUser = await user_model_1.User.findByIdAndDelete(userId);

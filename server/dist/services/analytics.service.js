@@ -5,25 +5,22 @@ const skill_check_session_model_1 = require("../models/skill.check.session.model
 const judgement_model_1 = require("../models/judgement.model");
 const getUserProgress = async (userId) => {
     const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId })
-        .populate("skillId")
         .sort({ createdAt: -1 })
         .lean();
     const skillMap = new Map();
     // Group sessions by skill
     for (const session of sessions) {
-        const skillId = session.skillId?._id?.toString();
-        const skillName = session.skillId?.name;
-        if (!skillId || !skillName)
+        const skillName = session.skillName;
+        if (!skillName)
             continue;
-        if (!skillMap.has(skillId)) {
-            skillMap.set(skillId, {
+        if (!skillMap.has(skillName)) {
+            skillMap.set(skillName, {
                 skill: skillName,
-                skillId,
                 sessions: [],
                 evaluations: []
             });
         }
-        skillMap.get(skillId).sessions.push(session);
+        skillMap.get(skillName).sessions.push(session);
     }
     // Get evaluations for all sessions
     const sessionIds = sessions.map(s => s._id.toString());
@@ -36,7 +33,7 @@ const getUserProgress = async (userId) => {
     }
     // Calculate progress per skill
     const progress = [];
-    for (const [skillId, data] of skillMap.entries()) {
+    for (const [skillName, data] of skillMap.entries()) {
         const skillEvaluations = data.sessions
             .map((s) => evaluationMap.get(s._id.toString()))
             .filter((e) => e != null);
@@ -60,7 +57,6 @@ const getUserProgress = async (userId) => {
         const lastSession = data.sessions.find((s) => s._id.toString() === lastEval.sessionId.toString());
         progress.push({
             skill: data.skill,
-            skillId,
             sessions: skillEvaluations.length,
             averageScore: Math.round(averageScore * 10) / 10,
             trend,
@@ -72,7 +68,6 @@ const getUserProgress = async (userId) => {
 exports.getUserProgress = getUserProgress;
 const getUserSkillGaps = async (userId) => {
     const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId })
-        .populate("skillId")
         .lean();
     const sessionIds = sessions.map(s => s._id.toString());
     const evaluations = await judgement_model_1.Judgement.find({
@@ -83,21 +78,19 @@ const getUserSkillGaps = async (userId) => {
         const session = sessions.find(s => s._id.toString() === evaluation.sessionId.toString());
         if (!session)
             continue;
-        const skillId = session.skillId?._id?.toString();
-        const skillName = session.skillId?.name;
-        const category = session.skillId?.category;
-        if (!skillId || !skillName)
+        const skillName = session.skillName;
+        const category = "general"; // Category was previously in skill model
+        if (!skillName)
             continue;
-        if (!gapMap.has(skillId)) {
-            gapMap.set(skillId, {
+        if (!gapMap.has(skillName)) {
+            gapMap.set(skillName, {
                 skill: skillName,
-                skillId,
-                category: category || "unknown",
+                category: category,
                 missingConcepts: new Map(),
                 scores: []
             });
         }
-        const gap = gapMap.get(skillId);
+        const gap = gapMap.get(skillName);
         // Ensure properties exist before accessing
         const clarity = evaluation.clarity || 0;
         const correctness = evaluation.correctness || 0;
@@ -108,7 +101,7 @@ const getUserSkillGaps = async (userId) => {
         }
     }
     const skillGaps = [];
-    for (const [skillId, data] of gapMap.entries()) {
+    for (const [skillName, data] of gapMap.entries()) {
         // Sort missing concepts by frequency
         const sortedConcepts = Array.from(data.missingConcepts.entries())
             .sort((a, b) => b[1] - a[1])
@@ -116,7 +109,6 @@ const getUserSkillGaps = async (userId) => {
         const averageScore = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
         skillGaps.push({
             skill: data.skill,
-            skillId,
             category: data.category,
             missingConcepts: sortedConcepts,
             frequency: data.scores.length,
@@ -130,7 +122,6 @@ const getUserSkillGaps = async (userId) => {
 exports.getUserSkillGaps = getUserSkillGaps;
 const getUserReadinessScore = async (userId) => {
     const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId })
-        .populate("skillId")
         .lean();
     const sessionIds = sessions.map(s => s._id.toString());
     const evaluations = await judgement_model_1.Judgement.find({
@@ -142,9 +133,8 @@ const getUserReadinessScore = async (userId) => {
     }
     const categoryMap = new Map();
     for (const session of sessions) {
-        const skillId = session.skillId?._id?.toString();
-        const skillName = session.skillId?.name;
-        const category = session.skillId?.category || "unknown";
+        const skillName = session.skillName;
+        const category = "general";
         const evaluation = evaluationMap.get(session._id.toString());
         if (!evaluation)
             continue;

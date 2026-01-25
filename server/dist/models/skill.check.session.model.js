@@ -4,7 +4,7 @@ exports.SkillCheckSession = void 0;
 const mongoose_1 = require("mongoose");
 const SkillCheckSessionSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
-    skillId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Skill", required: true },
+    skillName: { type: String, required: true },
     mode: {
         type: String,
         enum: ["explain", "drill", "blind"],

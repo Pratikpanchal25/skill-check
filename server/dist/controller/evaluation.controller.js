@@ -47,8 +47,9 @@ async function evaluateSession(req, res) {
             return;
         }
         const { id } = value;
+        const { answerId } = req.body;
         // Call EvaluationService
-        const evaluation = await EvaluationService.evaluateSession(id);
+        const evaluation = await EvaluationService.evaluateSession(id, answerId);
         const data = {
             success: true,
             evaluation

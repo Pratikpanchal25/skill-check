@@ -35,7 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const SkillController = __importStar(require("../controller/skill.controller"));
+const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
-router.get("/", SkillController.getAllSkills);
-router.post("/", SkillController.createSkill);
+router.get("/", auth_middleware_1.auth, SkillController.getAllSkills);
+router.post("/", auth_middleware_1.auth, SkillController.createSkill);
 exports.default = router;

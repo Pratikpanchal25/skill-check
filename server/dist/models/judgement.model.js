@@ -8,9 +8,15 @@ const JudgementSchema = new mongoose_1.Schema({
         ref: "SkillCheckSession",
         required: true,
     },
+    answerId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "UserAnswer",
+        required: true,
+    },
     clarity: Number,
     correctness: Number,
     depth: Number,
+    delivery: Number,
     missingConcepts: [String],
     reaction: {
         type: String,
@@ -19,5 +25,6 @@ const JudgementSchema = new mongoose_1.Schema({
     modelVersion: { type: String },
     feedback: String,
     improvementSuggestions: [String],
+    deliveryFeedback: String,
 }, { timestamps: true });
 exports.Judgement = (0, mongoose_1.model)("Judgement", JudgementSchema);

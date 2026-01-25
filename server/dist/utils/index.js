@@ -11,47 +11,47 @@ exports.bcryptPassword = bcryptPassword;
 exports.comparePassword = comparePassword;
 exports.createAndGetToken = createAndGetToken;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const uuid_1 = require("uuid");
 const user_model_1 = require("../models/user.model");
+const uuid_1 = require("uuid");
 function successResponse(res, data, message) {
     const response = {
         success: 1,
         data: data,
         message: message,
-        status_code: 200
+        status_code: 200,
     };
     return res.status(200).json(response);
 }
 function errorResponse(res, message) {
     const response = {
         success: 0,
-        message: message
+        message: message,
     };
     return res.status(200).json(response);
 }
 function errorResponseWithStatusCode(res, message, status) {
     const response = {
         success: 0,
-        message: message
+        message: message,
     };
     return res.status(status).json(response);
 }
 function catchResponse(res, error, message) {
     let errorMessage;
     if (error instanceof Error) {
-        errorMessage = error.message || 'An unexpected error occurred';
+        errorMessage = error.message || "An unexpected error occurred";
     }
-    else if (typeof error === 'string') {
+    else if (typeof error === "string") {
         errorMessage = error;
     }
     else {
-        errorMessage = 'An unknown error occurred';
+        errorMessage = "An unknown error occurred";
     }
     const response = {
         success: 0,
         error: errorMessage,
         message,
-        status_code: 500
+        status_code: 500,
     };
     return res.status(500).json(response);
 }
@@ -67,11 +67,11 @@ async function createAndGetToken(userId) {
     const token = (0, uuid_1.v4)();
     const updatedUser = await user_model_1.User.findByIdAndUpdate(userId, { token: token }, { new: true });
     if (!updatedUser) {
-        throw new Error('User not found');
+        throw new Error("User not found");
     }
     return {
         _id: updatedUser._id,
         user_id: userId,
-        token: token
+        token: token,
     };
 }

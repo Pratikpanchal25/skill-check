@@ -9,8 +9,8 @@ exports.createSessionSchema = joi_1.default.object({
     userId: joi_1.default.string().required().messages({
         'any.required': 'User ID is required'
     }),
-    skillId: joi_1.default.string().required().messages({
-        'any.required': 'Skill ID is required'
+    skillName: joi_1.default.string().required().messages({
+        'any.required': 'Skill Name is required'
     }),
     mode: joi_1.default.string().valid('explain', 'drill', 'blind').required().messages({
         'any.only': 'Mode must be one of: explain, drill, blind',

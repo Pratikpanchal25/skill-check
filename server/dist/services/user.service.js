@@ -10,14 +10,14 @@ const createUser = async (userData) => {
 };
 exports.createUser = createUser;
 const getUserOverview = async (userId) => {
-    const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId }).populate("skillId");
+    const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId });
     // Aggregate scores per skill
     const skillStats = {};
     for (const session of sessions) {
-        const judgement = await judgement_model_1.Judgement.findOne({ sessionId: session._id });
+        const judgement = await judgement_model_1.Judgement.findOne({ sessionId: session._id }).sort({ createdAt: -1 });
         if (!judgement)
             continue;
-        const skillName = session.skillId.name;
+        const skillName = session.skillName;
         if (!skillStats[skillName]) {
             skillStats[skillName] = {
                 clarity: [], correctness: [], depth: [],
@@ -43,18 +43,17 @@ const getUserOverview = async (userId) => {
 exports.getUserOverview = getUserOverview;
 const getUserActivity = async (userId) => {
     const sessions = await skill_check_session_model_1.SkillCheckSession.find({ userId })
-        .populate("skillId")
         .sort({ createdAt: -1 });
     const activity = await Promise.all(sessions.map(async (session) => {
-        const judgement = await judgement_model_1.Judgement.findOne({ sessionId: session._id });
+        const judgement = await judgement_model_1.Judgement.findOne({ sessionId: session._id }).sort({ createdAt: -1 });
         const score = judgement
             ? ((judgement.correctness || 0) + (judgement.clarity || 0) + (judgement.depth || 0)) / 3
             : null;
         return {
-            id: session._id,
-            skill: session.skillId.name,
+            id: session._id.toString(),
+            skill: session.skillName,
             mode: session.mode,
-            createdAt: session.createdAt,
+            createdAt: session.createdAt.toISOString(),
             evaluated: !!judgement,
             score
         };
