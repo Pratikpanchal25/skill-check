@@ -125,7 +125,7 @@ export const SkillSession: React.FC = () => {
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<number | null>(null);
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
@@ -520,7 +520,7 @@ export const SkillSession: React.FC = () => {
 
                     {/* Main Grid */}
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 px-6 py-6 items-start">
-                        
+
                         {/* LEFT COLUMN - Attempts Sidebar */}
                         <div className="space-y-6">
                             {/* Attempts Card */}
@@ -609,7 +609,7 @@ export const SkillSession: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         {/* Score Breakdown */}
                                         <div className="p-6">
                                             <div className="grid grid-cols-3 gap-4">
@@ -617,7 +617,7 @@ export const SkillSession: React.FC = () => {
                                                 <ScoreCard label="Correctness" score={evaluation.correctness} color="green" icon="✓" />
                                                 <ScoreCard label="Depth" score={evaluation.depth} color="purple" icon="🔍" />
                                             </div>
-                                            
+
                                             {/* Progress Bars */}
                                             <div className="mt-6 space-y-3">
                                                 <ScoreBar label="Clarity" score={evaluation.clarity} color="blue" />

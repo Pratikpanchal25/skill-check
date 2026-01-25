@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillCheck</title>
+  <!-- Prevent flash of white background on dark mode -->
+  <script>
+    (function() {
+      const storageKey = 'skillcheck-theme';
+      const theme = localStorage.getItem(storageKey);
+      const root = document.documentElement;
+      
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.classList.add('dark');
+      } else if (theme === 'light') {
+        root.classList.remove('dark');
+      } else {
+        // System preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          root.classList.add('dark');
+        }
+      }
+    })();
+  </script>
+  <style>
+    /* Set initial background to prevent flash */
+    html {
+      background-color: #09090b; /* dark background */
+    }
+    html:not(.dark) {
+      background-color: #ffffff; /* light background */
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-C3vVX5gS.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Bka42YgW.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>

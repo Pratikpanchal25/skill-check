@@ -26,7 +26,7 @@ export const SkillSessionRecordings: React.FC = () => {
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<any>(null);
     const recognitionRef = useRef<any | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
@@ -117,7 +117,7 @@ export const SkillSessionRecordings: React.FC = () => {
 
             const drawWaveform = () => {
                 if (!isRecordingRef.current || !canvasRef.current) return;
-                
+
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return;
@@ -144,15 +144,15 @@ export const SkillSessionRecordings: React.FC = () => {
                     const barHeight = waveDataRef.current[i] * maxBarHeight + 3;
                     const x = i * barWidth;
                     const barW = barWidth - 2;
-                    
+
                     // Create gradient for each bar
                     const gradient = ctx.createLinearGradient(0, centerY - barHeight, 0, centerY + barHeight);
                     gradient.addColorStop(0, 'rgba(34, 197, 94, 0.6)');
                     gradient.addColorStop(0.5, 'rgba(34, 197, 94, 1)');
                     gradient.addColorStop(1, 'rgba(34, 197, 94, 0.6)');
-                    
+
                     ctx.fillStyle = gradient;
-                    
+
                     // Draw rounded rectangle manually for compatibility
                     const radius = 2;
                     const y = centerY - barHeight;
@@ -220,7 +220,7 @@ export const SkillSessionRecordings: React.FC = () => {
             if (recognitionRef.current) recognitionRef.current.stop();
             if (audioContextRef.current) audioContextRef.current.close();
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-            
+
             // Reset wave data
             waveDataRef.current = new Array(64).fill(0);
         }
