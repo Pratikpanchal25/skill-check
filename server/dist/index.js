@@ -17,14 +17,14 @@ const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
-    origin: '*'
+    origin: "*",
 }));
-app.use('/api/users', user_routes_1.default);
-app.use('/api/sessions', session_routes_1.default);
-app.use('/api/skills', skill_routes_1.default);
-app.use('/api/analytics', analytics_routes_1.default);
-app.get('/', (req, res) => {
-    res.send('Skillcheck API is running');
+app.use("/users", user_routes_1.default);
+app.use("/sessions", session_routes_1.default);
+app.use("/skills", skill_routes_1.default);
+app.use("/analytics", analytics_routes_1.default);
+app.get("/", (req, res) => {
+    res.send("Skillcheck API is running");
 });
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
