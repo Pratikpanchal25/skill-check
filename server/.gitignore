@@ -24,6 +24,7 @@ target/
 # JetBrains IDE
 .idea/
 .env
+.env.production
 
 # Unit test reports
 TEST*.xml

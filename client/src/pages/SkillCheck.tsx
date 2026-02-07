@@ -149,17 +149,19 @@ export const SkillCheck: React.FC = () => {
     const isReady = (isCustomTopic && customTopicName.trim()) || (!isCustomTopic && selectedSkill);
 
     const normalizedSelectedTopic = (selectedTopicName ?? '').trim().toLowerCase();
-    const existingPendingSession = normalizedSelectedTopic
-        ? activities.reduce<{ id: string; createdAt: string } | null>((acc, a) => {
+    const existingSession = normalizedSelectedTopic
+        ? activities.reduce<{ id: string; createdAt: string; evaluated: boolean } | null>((acc, a) => {
               if (a.skill.trim().toLowerCase() !== normalizedSelectedTopic) return acc;
-              if (a.evaluated) return acc;
-              if (!acc) return { id: a.id, createdAt: a.createdAt };
-              return Date.parse(a.createdAt) > Date.parse(acc.createdAt) ? { id: a.id, createdAt: a.createdAt } : acc;
+              // Find the most recent session for this topic (regardless of evaluated status)
+              if (!acc) return { id: a.id, createdAt: a.createdAt, evaluated: a.evaluated };
+              return Date.parse(a.createdAt) > Date.parse(acc.createdAt) 
+                  ? { id: a.id, createdAt: a.createdAt, evaluated: a.evaluated } 
+                  : acc;
           }, null)
         : null;
 
-    const startDisabledReason = existingPendingSession
-        ? 'You already have an in-progress session for this topic.'
+    const startDisabledReason = existingSession
+        ? 'A session already exists for this topic. Add more takes there.'
         : !isReady
             ? 'Pick a topic to continue.'
             : null;
@@ -360,7 +362,7 @@ export const SkillCheck: React.FC = () => {
                             className="w-full mt-6"
                             size="lg"
                             onClick={handleStartSession}
-                            disabled={loading || !isReady || Boolean(existingPendingSession)}
+                            disabled={loading || !isReady || Boolean(existingSession)}
                             title={startDisabledReason ?? undefined}
                         >
                             {loading ? (
@@ -371,7 +373,7 @@ export const SkillCheck: React.FC = () => {
                             {loading ? 'Starting...' : 'Start Skill Check'}
                         </Button>
 
-                        {existingPendingSession && (
+                        {existingSession && (
                             <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
                                 <div className="flex items-start gap-3">
                                     <div className="mt-0.5 p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -379,7 +381,7 @@ export const SkillCheck: React.FC = () => {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-foreground">
-                                            Session already in progress
+                                            Session already exists
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-0.5">
                                             You can’t start another session for this topic until you finish the current one.
@@ -390,9 +392,9 @@ export const SkillCheck: React.FC = () => {
                                                 variant="outline"
                                                 size="sm"
                                                 className="h-8"
-                                                onClick={() => navigate(`/dashboard/session/${existingPendingSession.id}/record`)}
+                                                onClick={() => navigate(`/dashboard/session/${existingSession.id}/attempts`)}
                                             >
-                                                Continue Session
+                                                Go to Session
                                             </Button>
                                         </div>
                                     </div>

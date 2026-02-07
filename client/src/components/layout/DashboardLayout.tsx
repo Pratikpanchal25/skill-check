@@ -21,7 +21,7 @@ export const DashboardLayout: React.FC = () => {
     };
 
     return (
-        <div className="h-screen overflow-hidden bg-background text-foreground transition-colors duration-300 flex flex-col">
+        <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-background text-foreground transition-colors duration-300 flex flex-col">
             {/* Top Navigation */}
             <header className="bg-card border-b border-border z-10 shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +50,7 @@ export const DashboardLayout: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-hidden thin-scrollbar">
+            <main className="flex-1 lg:overflow-hidden thin-scrollbar">
                 <Outlet />
             </main>
 
@@ -69,13 +69,13 @@ export const DashboardLayout: React.FC = () => {
                                 <p className="text-xs text-muted-foreground">End your current session</p>
                             </div>
                         </div>
-                        
+
                         {/* Content */}
                         <div className="p-6">
                             <p className="text-sm text-muted-foreground mb-6">
                                 Are you sure you want to sign out? You'll need to log in again to access your account.
                             </p>
-                            
+
                             <div className="flex gap-3">
                                 <Button
                                     variant="ghost"

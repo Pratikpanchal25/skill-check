@@ -234,10 +234,21 @@ export const SkillSessionRecordings: React.FC = () => {
 
     const handleSubmitEvaluation = async () => {
         if (!audioBlob || !sessionId) return;
+
+        // Validate minimum word count
+        const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
+        if (wordCount < 15) {
+            toast.error('Your explanation is too short. Please record again with more details (at least 15 words).');
+            return;
+        }
+
         setLoading(true);
+        let answerSubmitted = false;
+
         try {
+            // Step 1: Submit the answer
             const answerRes = await api.post(`/sessions/${sessionId}/answer`, {
-                rawText: transcript || "Node.js is a JavaScript runtime built on Chrome's V8 engine. It uses an event-driven, non-blocking I/O model making it lightweight and efficient. Node.js excels at building scalable network applications, REST APIs, and real-time services like chat applications using its single-threaded event loop architecture.",
+                rawText: transcript,
                 voiceMetrics: {
                     duration: recordingTime,
                     pauseCount: pauseCount,
@@ -246,17 +257,41 @@ export const SkillSessionRecordings: React.FC = () => {
                 }
             });
 
+            answerSubmitted = true;
             const answerId = answerRes.data.data.answer._id;
-            const res = await api.post(`/sessions/${sessionId}/evaluate`, { answerId });
-            if (res.data.success === 1) {
-                // Invalidate cache so dashboard shows updated data
+
+            // Step 2: Try to evaluate
+            try {
+                const res = await api.post(`/sessions/${sessionId}/evaluate`, { answerId });
+
+                if (res.data.success === 1) {
+                    // Check if evaluation is pending (LLM failed)
+                    if (res.data.data?.evaluationPending) {
+                        toast.warning('Evaluation pending. You can re-evaluate from the attempts page.');
+                    } else {
+                        toast.success('Evaluation complete!');
+                    }
+                }
+            } catch (evalError) {
+                console.error('Evaluation failed:', evalError);
+                toast.warning('Evaluation failed. You can re-evaluate from the attempts page.');
+            }
+
+            // Always navigate to attempts page after answer is submitted
+            dispatch(invalidateActivities());
+            dispatch(invalidateOverview());
+            navigate(`/dashboard/session/${sessionId}/attempts`);
+
+        } catch (error: any) {
+            console.error('Failed to submit answer:', error);
+            if (answerSubmitted) {
+                // Answer was submitted, navigate to attempts for re-evaluation
                 dispatch(invalidateActivities());
                 dispatch(invalidateOverview());
                 navigate(`/dashboard/session/${sessionId}/attempts`);
+            } else {
+                toast.error('Failed to submit your recording. Please try again.');
             }
-        } catch (error) {
-            console.error('Evaluation failed', error);
-            toast.error('Evaluation failed');
         } finally {
             setLoading(false);
         }

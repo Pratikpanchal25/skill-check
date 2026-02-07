@@ -24,22 +24,22 @@ export const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
-    
+
     // Get data from Redux store
-    const { 
-        overview, 
-        activities, 
+    const {
+        overview,
+        activities,
         overviewFetchedAt,
         activitiesFetchedAt,
-        overviewLoading, 
-        activitiesLoading 
+        overviewLoading,
+        activitiesLoading
     } = useSelector((state: RootState) => state.data);
-    
+
     const notFetchedYet = Boolean(user?._id) && (!overviewFetchedAt || !activitiesFetchedAt);
     const loading = overviewLoading || activitiesLoading || notFetchedYet;
-    const stats = { 
-        sessions: activities.length, 
-        skillsPracticed: overview.length 
+    const stats = {
+        sessions: activities.length,
+        skillsPracticed: overview.length
     };
 
     useEffect(() => {
@@ -81,15 +81,15 @@ export const Dashboard: React.FC = () => {
     const uniqueSkills = [...new Set(evaluatedActivities.map(a => a.skill))];
 
     // Create chart data in Recharts format - each date has scores for all skills
-    const chartDataMap = new Map<string, { date: string; [key: string]: number | string }>();
-    
+    const chartDataMap = new Map<string, { date: string;[key: string]: number | string }>();
+
     evaluatedActivities.forEach(activity => {
         const dateKey = new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         if (!chartDataMap.has(dateKey)) {
             chartDataMap.set(dateKey, { date: dateKey });
         }
         const entry = chartDataMap.get(dateKey)!;
-        entry[activity.skill] = activity.score ?? 0;
+        entry[activity.skill] = Number(activity.score ?? 0);
     });
 
     const chartData = Array.from(chartDataMap.values());
@@ -97,7 +97,7 @@ export const Dashboard: React.FC = () => {
     const graphHeight = 280;
 
     return (
-        <div className="bg-background h-full flex flex-col overflow-hidden">
+        <div className="bg-background lg:h-full flex flex-col lg:overflow-hidden">
             {/* Header */}
             <div className="px-8 py-6 max-w-7xl mx-auto w-full shrink-0">
                 <h1 className="text-3xl font-bold text-foreground">
@@ -109,9 +109,9 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-8 pb-6 flex-1 min-h-0 w-full overflow-y-auto lg:overflow-hidden">
+            <div className="max-w-7xl mx-auto px-8 pb-6 flex-1 lg:min-h-0 w-full lg:overflow-y-auto lg:overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-full">
-                    
+
                     {/* Left Column */}
                     <div className="flex flex-col gap-6 min-h-0">
                         {/* Stats Row */}
@@ -156,7 +156,7 @@ export const Dashboard: React.FC = () => {
                         <div className="border border-border/50 rounded-xl bg-card overflow-hidden flex-1 flex flex-col min-h-0">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between shrink-0">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Sessions</h3>
-                                <button 
+                                <button
                                     onClick={() => navigate('/dashboard/sessions')}
                                     className="text-xs text-primary hover:underline cursor-pointer"
                                 >
@@ -193,7 +193,7 @@ export const Dashboard: React.FC = () => {
                                             </div>
                                             {activity.evaluated ? (
                                                 <span className={cn("text-sm font-bold", getScoreColor(activity.score ?? 0))}>
-                                                    {activity.score?.toFixed(1) ?? 0}/10
+                                                    {Number(activity.score ?? 0).toFixed(1)}/10
                                                 </span>
                                             ) : (
                                                 <span className="text-[10px] font-bold uppercase bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded">
@@ -248,31 +248,31 @@ export const Dashboard: React.FC = () => {
                                                         ))}
                                                     </defs>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                                                    <XAxis 
-                                                        dataKey="date" 
+                                                    <XAxis
+                                                        dataKey="date"
                                                         tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                                                         tickLine={false}
                                                         axisLine={{ stroke: 'hsl(var(--border))' }}
                                                     />
-                                                    <YAxis 
-                                                        domain={[0, 10]} 
+                                                    <YAxis
+                                                        domain={[0, 10]}
                                                         tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                                                         tickLine={false}
                                                         axisLine={{ stroke: 'hsl(var(--border))' }}
                                                         ticks={[0, 2, 4, 6, 8, 10]}
                                                     />
-                                                    <Tooltip 
-                                                        contentStyle={{ 
-                                                            backgroundColor: 'hsl(var(--card))', 
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: 'hsl(var(--card))',
                                                             border: '1px solid hsl(var(--border))',
                                                             borderRadius: '8px',
                                                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                                                         }}
                                                         labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 4 }}
                                                         itemStyle={{ color: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                                                        formatter={(value: number | undefined) => [`${(value ?? 0).toFixed(1)}/10`, '']}
+                                                        formatter={(value: number | string | undefined) => [`${Number(value ?? 0).toFixed(1)}/10`, '']}
                                                     />
-                                                    <Legend 
+                                                    <Legend
                                                         wrapperStyle={{ paddingTop: 16 }}
                                                         iconType="circle"
                                                         iconSize={8}
@@ -306,14 +306,14 @@ export const Dashboard: React.FC = () => {
                                         <div className="flex items-center gap-4 pt-4 border-t border-border/30">
                                             <div className="flex-1 text-center">
                                                 <p className="text-lg font-bold text-primary">
-                                                    {(evaluatedActivities.reduce((acc, a) => acc + (a.score ?? 0), 0) / evaluatedActivities.length).toFixed(1)}
+                                                    {(evaluatedActivities.reduce((acc, a) => acc + Number(a.score ?? 0), 0) / evaluatedActivities.length).toFixed(1)}
                                                 </p>
                                                 <p className="text-[10px] text-muted-foreground">Avg Score</p>
                                             </div>
                                             <div className="w-px h-8 bg-border/50" />
                                             <div className="flex-1 text-center">
                                                 <p className="text-lg font-bold text-green-500">
-                                                    {Math.max(...evaluatedActivities.map(a => a.score ?? 0)).toFixed(1)}
+                                                    {Math.max(...evaluatedActivities.map(a => Number(a.score ?? 0))).toFixed(1)}
                                                 </p>
                                                 <p className="text-[10px] text-muted-foreground">Best</p>
                                             </div>

@@ -30,17 +30,32 @@ const evaluateSession = async (sessionId, answerId) => {
     // Fetch voice metrics if available (for voice input type)
     let voiceMetricsData;
     if (session.inputType === "voice") {
-        const metrics = await voice_metrics_model_1.VoiceMetrics.findOne({ sessionId }).sort({ createdAt: -1 });
+        const metrics = await voice_metrics_model_1.VoiceMetrics.findOne({ sessionId }).sort({
+            createdAt: -1,
+        });
         if (metrics) {
             voiceMetricsData = {
                 wpm: metrics.wpm ?? undefined,
                 fillerWords: metrics.fillerWords ?? undefined,
-                longPauses: metrics.longPauses ?? undefined
+                longPauses: metrics.longPauses ?? undefined,
             };
         }
     }
     // Call LLM service for evaluation with voice metrics
-    const aiResult = await (0, llm_service_1.evaluateAnswer)(answer.rawText || answer.transcript || "", skillName, voiceMetricsData);
+    let aiResult;
+    try {
+        aiResult = await (0, llm_service_1.evaluateAnswer)(answer.rawText || answer.transcript || "", skillName, voiceMetricsData);
+    }
+    catch (llmError) {
+        console.error("LLM evaluation failed:", llmError);
+        // Return a pending evaluation marker so frontend knows to show re-evaluate
+        return {
+            evaluationPending: true,
+            answerId: answer._id,
+            sessionId,
+            error: "LLM evaluation failed. Please try again.",
+        };
+    }
     // Create evaluation with model version
     const evaluation = new judgement_model_1.Judgement({
         sessionId,
@@ -54,7 +69,7 @@ const evaluateSession = async (sessionId, answerId) => {
         feedback: aiResult.feedback,
         improvementSuggestions: aiResult.improvementSuggestions,
         deliveryFeedback: aiResult.deliveryFeedback,
-        modelVersion: "gemini-2.5-flash"
+        modelVersion: "gemini-2.5-flash",
     });
     return await evaluation.save();
 };
