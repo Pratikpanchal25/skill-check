@@ -97,7 +97,7 @@ export const Dashboard: React.FC = () => {
     const graphHeight = 280;
 
     return (
-        <div className="bg-background lg:h-full flex flex-col lg:overflow-hidden">
+        <div className="bg-background h-full flex flex-col overflow-hidden">
             {/* Header */}
             <div className="px-8 py-6 max-w-7xl mx-auto w-full shrink-0">
                 <h1 className="text-3xl font-bold text-foreground">
@@ -109,8 +109,8 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-8 pb-6 flex-1 lg:min-h-0 w-full lg:overflow-y-auto lg:overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-full">
+            <div className="max-w-7xl mx-auto px-8 pb-6 flex-1 min-h-0 w-full overflow-y-auto thin-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
 
                     {/* Left Column */}
                     <div className="flex flex-col gap-6 min-h-0">

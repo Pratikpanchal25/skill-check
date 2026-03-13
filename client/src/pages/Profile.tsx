@@ -70,7 +70,7 @@ export const Profile: React.FC = () => {
             </div>
 
             {/* Main Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 px-6 py-6 flex-1 min-h-0 w-full">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 px-6 py-6 flex-1 min-h-0 w-full overflow-y-auto thin-scrollbar">
                 
                 {/* LEFT COLUMN - Profile Info */}
                 <div className="flex flex-col gap-6">

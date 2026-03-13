@@ -21,7 +21,7 @@ export const DashboardLayout: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-background text-foreground transition-colors duration-300 flex flex-col">
+        <div className="h-screen w-full bg-background text-foreground transition-colors duration-300 flex flex-col overflow-hidden">
             {/* Top Navigation */}
             <header className="bg-card border-b border-border z-10 shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +50,7 @@ export const DashboardLayout: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 lg:overflow-hidden thin-scrollbar">
+            <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden thin-scrollbar relative">
                 <Outlet />
             </main>
 
