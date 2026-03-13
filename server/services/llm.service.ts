@@ -115,6 +115,11 @@ ${answerText}
         }
     }
 
+    // If we failed to get a valid evaluation object, throw an error
+    if (!evaluation || Object.keys(evaluation).length === 0) {
+        throw new Error("Failed to extract valid evaluation JSON from model response");
+    }
+
     return {
       clarity: clamp(evaluation.clarity),
       correctness: clamp(evaluation.correctness),
@@ -142,20 +147,8 @@ ${answerText}
     };
   } catch (err) {
     console.error("Gemini evaluation failed:", err);
-    return {
-      clarity: 0,
-      correctness: 0,
-      depth: 0,
-      delivery: 0,
-      missingConcepts: ["Evaluation failed"],
-      reaction: "neutral",
-      feedback:
-        "We couldn't generate a detailed evaluation at this time. Please try again.",
-      improvementSuggestions: [
-        "Check your connection and retry the evaluation.",
-      ],
-      deliveryFeedback: "Evaluation failed - unable to analyze delivery.",
-    };
+    // Throw error so the controller can mark this as pending evaluation
+    throw err;
   }
 };
 
