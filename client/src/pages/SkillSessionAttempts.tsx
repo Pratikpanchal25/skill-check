@@ -79,8 +79,13 @@ export const SkillSessionAttempts: React.FC = () => {
     // Check if evaluation is pending (failed to complete - all scores are 0)
     const isEvaluationPending = (evalResult: EvaluationResult | null) => {
         if (!evalResult) return true; // No evaluation = pending
-        // If all scores are 0, evaluation failed
-        return evalResult.clarity === 0 && evalResult.correctness === 0 && evalResult.depth === 0;
+        
+        // If all scores are 0, check if we have feedback to determine if it's a real 0 score or a failure/pending state
+        const isAllZero = evalResult.clarity === 0 && evalResult.correctness === 0 && evalResult.depth === 0;
+        const hasFeedback = evalResult.feedback && evalResult.feedback.length > 0;
+        
+        // Only consider it pending if scores are 0 AND there's no feedback
+        return isAllZero && !hasFeedback;
     };
 
     const isPending = isEvaluationPending(evaluation);
@@ -137,9 +142,16 @@ export const SkillSessionAttempts: React.FC = () => {
             const res = await api.post(`/sessions/${sessionId}/evaluate`, { answerId });
             if (res.data.success === 1) {
                 const evaluation = res.data.data?.evaluation;
-                const isFailure = evaluation && evaluation.clarity === 0 && evaluation.correctness === 0 && evaluation.depth === 0;
+                
+                // Only consider it a failure if scores are 0 AND there's no feedback
+                const isAllZero = evaluation && evaluation.clarity === 0 && evaluation.correctness === 0 && evaluation.depth === 0;
+                const hasFeedback = evaluation?.feedback && evaluation.feedback.length > 0;
+                const isFailure = isAllZero && !hasFeedback;
 
-                if (res.data.data?.evaluationPending || isFailure) {
+                // Also check for explicit pending flag from backend (which indicates LLM failure)
+                const isPending = evaluation && evaluation.evaluationPending === true;
+
+                if (isPending || isFailure) {
                     toast.error('Evaluation failed. Please try again later.');
                 } else {
                     toast.success('Re-evaluation complete!');
