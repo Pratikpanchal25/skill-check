@@ -69,27 +69,32 @@ ${answerText}
         });
         const text = response.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
         let evaluation = {};
-        try {
-            evaluation = JSON.parse(text);
-        }
-        catch (err) {
-            console.log("err", err);
-            const first = text.indexOf("{");
-            const last = text.lastIndexOf("}");
-            if (first !== -1 && last !== -1 && last > first) {
-                const maybe = text.slice(first, last + 1);
-                try {
-                    evaluation = JSON.parse(maybe);
-                }
-                catch (err2) {
-                    console.warn("Failed to parse extracted JSON from model output", err2);
-                    evaluation = {};
-                }
+        // Attempt to extract JSON from the response (removing markdown blocks if present)
+        const first = text.indexOf("{");
+        const last = text.lastIndexOf("}");
+        if (first !== -1 && last !== -1 && last > first) {
+            const jsonString = text.slice(first, last + 1);
+            try {
+                evaluation = JSON.parse(jsonString);
             }
-            else {
+            catch (err) {
+                console.warn("Failed to parse extracted JSON from model output:", err);
+                evaluation = {};
+            }
+        }
+        else {
+            // Fallback: try parsing raw text if no object braces found
+            try {
+                evaluation = JSON.parse(text);
+            }
+            catch (err) {
                 console.warn("Model output is not valid JSON and no JSON object could be extracted");
                 evaluation = {};
             }
+        }
+        // If we failed to get a valid evaluation object, throw an error
+        if (!evaluation || Object.keys(evaluation).length === 0) {
+            throw new Error("Failed to extract valid evaluation JSON from model response");
         }
         return {
             clarity: clamp(evaluation.clarity),
@@ -116,19 +121,8 @@ ${answerText}
     }
     catch (err) {
         console.error("Gemini evaluation failed:", err);
-        return {
-            clarity: 0,
-            correctness: 0,
-            depth: 0,
-            delivery: 0,
-            missingConcepts: ["Evaluation failed"],
-            reaction: "neutral",
-            feedback: "We couldn't generate a detailed evaluation at this time. Please try again.",
-            improvementSuggestions: [
-                "Check your connection and retry the evaluation.",
-            ],
-            deliveryFeedback: "Evaluation failed - unable to analyze delivery.",
-        };
+        // Throw error so the controller can mark this as pending evaluation
+        throw err;
     }
 };
 exports.evaluateAnswer = evaluateAnswer;
