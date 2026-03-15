@@ -99,8 +99,8 @@ export const Dashboard: React.FC = () => {
     return (
         <div className="bg-background h-full flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-8 py-6 max-w-7xl mx-auto w-full shrink-0">
-                <h1 className="text-3xl font-bold text-foreground">
+            <div className="py-5 sm:py-6 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 shrink-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                     Hi, {user?.name}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -109,14 +109,14 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-8 pb-6 flex-1 min-h-0 w-full overflow-y-auto thin-scrollbar">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-6 flex-1 min-h-0 overflow-y-auto thin-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:h-full">
 
                     {/* Left Column */}
-                    <div className="flex flex-col gap-6 min-h-0">
+                    <div className="flex flex-col gap-4 sm:gap-6 min-h-0 lg:min-h-0">
                         {/* Stats Row */}
-                        <div className="flex gap-4 shrink-0">
-                            <div className="flex-1 border border-border/50 rounded-xl bg-card px-5 py-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
+                            <div className="border border-border/50 rounded-xl bg-card px-4 sm:px-5 py-3 sm:py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-primary/10 text-primary">
                                         <Mic className="h-4 w-4" />
@@ -127,7 +127,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex-1 border border-border/50 rounded-xl bg-card px-5 py-4">
+                            <div className="border border-border/50 rounded-xl bg-card px-4 sm:px-5 py-3 sm:py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
                                         <BrainCircuit className="h-4 w-4" />
@@ -141,7 +141,7 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Explain a Concept Card */}
-                        <div className="border border-border/50 rounded-xl bg-card p-6 shrink-0">
+                        <div className="border border-border/50 rounded-xl bg-card p-4 sm:p-6 shrink-0">
                             <h3 className="text-lg font-semibold mb-2">Explain a Concept</h3>
                             <p className="text-sm text-muted-foreground mb-5">
                                 Pick a technical topic and explain it in your own words. Our AI evaluates clarity, correctness, depth, and delivery.
@@ -153,7 +153,7 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Recent Sessions */}
-                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden flex-1 flex flex-col min-h-0">
+                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden lg:flex-1 lg:flex lg:flex-col min-h-75 lg:min-h-0 shrink-0 lg:shrink">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between shrink-0">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Sessions</h3>
                                 <button

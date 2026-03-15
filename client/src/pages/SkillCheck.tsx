@@ -169,8 +169,8 @@ export const SkillCheck: React.FC = () => {
     return (
         <div className="bg-background overflow-hidden">
             {/* Header */}
-            <div className="border-b border-border/30 px-6 py-5">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="border-b border-border/30 py-5">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -190,7 +190,7 @@ export const SkillCheck: React.FC = () => {
             </div>
 
             {/* Main Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 px-6 py-6 items-stretch">
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 py-6 items-stretch">
                 
                 {/* LEFT COLUMN - Configuration */}
                 <div className="space-y-6">

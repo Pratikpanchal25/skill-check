@@ -345,8 +345,8 @@ export const SkillSession: React.FC = () => {
             {step === 1 && (
                 <div className="animate-in slide-in-from-bottom-8 duration-500">
                     {/* Header */}
-                    <div className="border-b border-border/30 px-6 py-5">
-                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="border-b border-border/30 py-5">
+                        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Button
                                     variant="ghost"
@@ -365,7 +365,7 @@ export const SkillSession: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="max-w-7xl mx-auto px-6 py-12">
+                    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
                         <div className="flex flex-col items-center justify-center space-y-10">
                             <div className="text-center space-y-4">
                                 <div className="inline-block p-3 bg-primary/10 rounded-xl text-primary mb-2">
@@ -497,8 +497,8 @@ export const SkillSession: React.FC = () => {
             {step === 2 && (
                 <div className="animate-in fade-in duration-500">
                     {/* Header */}
-                    <div className="border-b border-border/30 px-6 py-5">
-                        <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="border-b border-border/30 py-5">
+                        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Button
                                     variant="ghost"
@@ -519,7 +519,7 @@ export const SkillSession: React.FC = () => {
                     </div>
 
                     {/* Main Grid */}
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 px-6 py-6 items-start">
+                    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 py-6 items-start">
 
                         {/* LEFT COLUMN - Attempts Sidebar */}
                         <div className="space-y-6">

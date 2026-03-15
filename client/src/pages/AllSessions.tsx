@@ -151,7 +151,7 @@ export const AllSessions: React.FC = () => {
 
     return (
         <div className="bg-background h-full flex flex-col overflow-hidden">
-            <div className="max-w-7xl mx-auto w-full flex flex-col h-full px-8">
+            <div className="max-w-7xl mx-auto w-full flex flex-col h-full px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="py-6 shrink-0">
                     <Button

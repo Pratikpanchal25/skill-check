@@ -9,6 +9,125 @@ import { Brain, Mic, StopCircle, RotateCcw, Loader2, ArrowLeft, Volume2, AlertCi
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 
+type MetricStatus = 'low' | 'good' | 'high' | 'unknown';
+
+interface VoiceMetrics {
+    loudnessDb: number;
+    pitchHz: number;
+    speechRateWpm: number;
+    qualityScore: number;
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const getBandStatus = (value: number, min: number, max: number): MetricStatus => {
+    if (!Number.isFinite(value)) return 'unknown';
+    if (value < min) return 'low';
+    if (value > max) return 'high';
+    return 'good';
+};
+
+const getPitchStatus = (pitchHz: number): MetricStatus => {
+    if (!pitchHz || !Number.isFinite(pitchHz)) return 'unknown';
+    if (pitchHz < 110) return 'low';
+    if (pitchHz > 230) return 'high';
+    return 'good';
+};
+
+const estimatePitchFromBuffer = (buffer: Float32Array, sampleRate: number): number => {
+    const size = buffer.length;
+    let rms = 0;
+
+    for (let i = 0; i < size; i++) {
+        const sample = buffer[i];
+        rms += sample * sample;
+    }
+
+    rms = Math.sqrt(rms / size);
+    if (rms < 0.01) return 0;
+
+    let r1 = 0;
+    let r2 = size - 1;
+    const threshold = 0.2;
+
+    for (let i = 0; i < size / 2; i++) {
+        if (Math.abs(buffer[i]) < threshold) {
+            r1 = i;
+            break;
+        }
+    }
+
+    for (let i = 1; i < size / 2; i++) {
+        if (Math.abs(buffer[size - i]) < threshold) {
+            r2 = size - i;
+            break;
+        }
+    }
+
+    const trimmed = buffer.slice(r1, r2);
+    const trimmedSize = trimmed.length;
+    if (trimmedSize < 32) return 0;
+
+    const correlations = new Array(trimmedSize).fill(0);
+    for (let lag = 0; lag < trimmedSize; lag++) {
+        let sum = 0;
+        for (let i = 0; i < trimmedSize - lag; i++) {
+            sum += trimmed[i] * trimmed[i + lag];
+        }
+        correlations[lag] = sum;
+    }
+
+    let start = 0;
+    while (start < trimmedSize - 1 && correlations[start] > correlations[start + 1]) {
+        start++;
+    }
+
+    let bestLag = -1;
+    let bestValue = -Infinity;
+    for (let i = start; i < trimmedSize; i++) {
+        if (correlations[i] > bestValue) {
+            bestValue = correlations[i];
+            bestLag = i;
+        }
+    }
+
+    if (bestLag <= 0) return 0;
+
+    const left = correlations[bestLag - 1] ?? correlations[bestLag];
+    const center = correlations[bestLag];
+    const right = correlations[bestLag + 1] ?? correlations[bestLag];
+    const denominator = 2 * center - left - right;
+    const shift = denominator !== 0 ? (right - left) / (2 * denominator) : 0;
+    const correctedLag = bestLag + shift;
+
+    const hz = sampleRate / correctedLag;
+    if (!Number.isFinite(hz) || hz < 60 || hz > 400) return 0;
+    return hz;
+};
+
+const statusStyles: Record<MetricStatus, { text: string; chip: string; ring: string }> = {
+    good: {
+        text: 'text-emerald-400',
+        chip: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+        ring: 'ring-emerald-500/35',
+    },
+    low: {
+        text: 'text-amber-300',
+        chip: 'bg-amber-500/15 text-amber-200 border-amber-500/40',
+        ring: 'ring-amber-500/35',
+    },
+    high: {
+        text: 'text-orange-300',
+        chip: 'bg-orange-500/15 text-orange-200 border-orange-500/40',
+        ring: 'ring-orange-500/35',
+    },
+    unknown: {
+        text: 'text-zinc-400',
+        chip: 'bg-zinc-700/25 text-zinc-300 border-zinc-600/60',
+        ring: 'ring-zinc-600/35',
+    },
+};
+
 export const SkillSessionRecordings: React.FC = () => {
     const { id: sessionId } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -22,6 +141,12 @@ export const SkillSessionRecordings: React.FC = () => {
     const [pauseCount, setPauseCount] = useState(0);
     const [avgPauseDuration, setAvgPauseDuration] = useState(0);
     const [fillerWordCount, setFillerWordCount] = useState(0);
+    const [voiceMetrics, setVoiceMetrics] = useState<VoiceMetrics>({
+        loudnessDb: -60,
+        pitchHz: 0,
+        speechRateWpm: 0,
+        qualityScore: 0,
+    });
     const [loading, setLoading] = useState(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -37,7 +162,14 @@ export const SkillSessionRecordings: React.FC = () => {
     const isCurrentlyPausedRef = useRef<boolean>(false);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const animationFrameRef = useRef<number | null>(null);
-    const waveDataRef = useRef<number[]>(new Array(64).fill(0));
+    const transcriptRef = useRef<string>('');
+    const recordingStartRef = useRef<number>(0);
+    const loudnessHistoryRef = useRef<number[]>([]);
+    const metricsUpdateRef = useRef<number>(0);
+
+    useEffect(() => {
+        transcriptRef.current = transcript;
+    }, [transcript]);
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -109,7 +241,9 @@ export const SkillSessionRecordings: React.FC = () => {
             analyserRef.current = analyser;
 
             const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
+            const frequencyData = new Uint8Array(bufferLength);
+            const timeData = new Uint8Array(analyser.fftSize);
+            const floatTimeData = new Float32Array(analyser.fftSize);
 
             silenceStartRef.current = null;
             totalPauseTimeRef.current = 0;
@@ -122,57 +256,120 @@ export const SkillSessionRecordings: React.FC = () => {
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return;
 
-                analyser.getByteFrequencyData(dataArray);
+                analyser.getByteFrequencyData(frequencyData);
+                analyser.getByteTimeDomainData(timeData);
+                analyser.getFloatTimeDomainData(floatTimeData);
 
-                // Update wave data with smoothing
-                const barCount = 64;
-                for (let i = 0; i < barCount; i++) {
-                    const dataIndex = Math.floor(i * bufferLength / barCount);
-                    const value = dataArray[dataIndex] / 255;
-                    waveDataRef.current[i] = waveDataRef.current[i] * 0.8 + value * 0.2;
+                const elapsedSeconds = Math.max(1, (Date.now() - recordingStartRef.current) / 1000);
+
+                let sumSquares = 0;
+                for (let i = 0; i < floatTimeData.length; i++) {
+                    const sample = floatTimeData[i];
+                    sumSquares += sample * sample;
                 }
+
+                const rms = Math.sqrt(sumSquares / floatTimeData.length);
+                const loudnessDbRaw = 20 * Math.log10(rms + 1e-7);
+                const loudnessDb = clamp(loudnessDbRaw, -60, 0);
+                loudnessHistoryRef.current.push(loudnessDb);
+                if (loudnessHistoryRef.current.length > 180) {
+                    loudnessHistoryRef.current.shift();
+                }
+
+                const pitchHz = estimatePitchFromBuffer(floatTimeData, audioContext.sampleRate);
+                const wordsSpoken = transcriptRef.current.trim().split(/\s+/).filter(Boolean).length;
+                const speechRateWpm = wordsSpoken > 0 ? (wordsSpoken / elapsedSeconds) * 60 : 0;
+
+                const loudnessStatus = getBandStatus(loudnessDb, -32, -16);
+                const pitchStatus = getPitchStatus(pitchHz);
+                const speedStatus = getBandStatus(speechRateWpm || NaN, 110, 160);
+
+                const statusScore = (status: MetricStatus) => {
+                    if (status === 'good') return 100;
+                    if (status === 'unknown') return 55;
+                    return 40;
+                };
+                const qualityScore = Math.round((statusScore(loudnessStatus) + statusScore(pitchStatus) + statusScore(speedStatus)) / 3);
 
                 // Clear canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#111827';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                const centerY = canvas.height / 2;
-                const barWidth = canvas.width / barCount;
-                const maxBarHeight = canvas.height * 0.4;
+                // Draw horizontal guide bands for loudness zones
+                const mapDbToY = (db: number) => {
+                    const normalized = (clamp(db, -60, -5) + 60) / 55;
+                    return canvas.height - normalized * (canvas.height - 14) - 7;
+                };
 
-                // Draw mirrored waveform bars
-                for (let i = 0; i < barCount; i++) {
-                    const barHeight = waveDataRef.current[i] * maxBarHeight + 3;
-                    const x = i * barWidth;
-                    const barW = barWidth - 2;
+                const quietY = mapDbToY(-32);
+                const loudY = mapDbToY(-16);
 
-                    // Create gradient for each bar
-                    const gradient = ctx.createLinearGradient(0, centerY - barHeight, 0, centerY + barHeight);
-                    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.6)');
-                    gradient.addColorStop(0.5, 'rgba(34, 197, 94, 1)');
-                    gradient.addColorStop(1, 'rgba(34, 197, 94, 0.6)');
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.08)';
+                ctx.fillRect(0, quietY, canvas.width, canvas.height - quietY);
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+                ctx.fillRect(0, loudY, canvas.width, quietY - loudY);
+                ctx.fillStyle = 'rgba(251, 146, 60, 0.08)';
+                ctx.fillRect(0, 0, canvas.width, loudY);
 
-                    ctx.fillStyle = gradient;
-
-                    // Draw rounded rectangle manually for compatibility
-                    const radius = 2;
-                    const y = centerY - barHeight;
-                    const h = barHeight * 2;
+                // Grid lines
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 4; i++) {
+                    const y = (canvas.height / 4) * i;
                     ctx.beginPath();
-                    ctx.moveTo(x + 1 + radius, y);
-                    ctx.lineTo(x + 1 + barW - radius, y);
-                    ctx.quadraticCurveTo(x + 1 + barW, y, x + 1 + barW, y + radius);
-                    ctx.lineTo(x + 1 + barW, y + h - radius);
-                    ctx.quadraticCurveTo(x + 1 + barW, y + h, x + 1 + barW - radius, y + h);
-                    ctx.lineTo(x + 1 + radius, y + h);
-                    ctx.quadraticCurveTo(x + 1, y + h, x + 1, y + h - radius);
-                    ctx.lineTo(x + 1, y + radius);
-                    ctx.quadraticCurveTo(x + 1, y, x + 1 + radius, y);
-                    ctx.closePath();
+                    ctx.moveTo(0, y + 0.5);
+                    ctx.lineTo(canvas.width, y + 0.5);
+                    ctx.stroke();
+                }
+
+                // Draw loudness time series line
+                const history = loudnessHistoryRef.current;
+                if (history.length > 1) {
+                    ctx.beginPath();
+                    history.forEach((db, index) => {
+                        const x = (index / (history.length - 1)) * (canvas.width - 1);
+                        const y = mapDbToY(db);
+                        if (index === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+
+                    const lineGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                    lineGradient.addColorStop(0, 'rgba(34, 197, 94, 0.9)');
+                    lineGradient.addColorStop(1, 'rgba(56, 189, 248, 0.95)');
+                    ctx.strokeStyle = lineGradient;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    const lastX = canvas.width - 1;
+                    const lastY = mapDbToY(history[history.length - 1]);
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = loudnessStatus === 'good' ? '#34d399' : loudnessStatus === 'low' ? '#fbbf24' : '#fb923c';
                     ctx.fill();
                 }
 
+                // Overlay labels
+                ctx.fillStyle = 'rgba(226, 232, 240, 0.75)';
+                ctx.font = '11px sans-serif';
+                ctx.fillText('Loud', 8, mapDbToY(-12));
+                ctx.fillText('Ideal', 8, mapDbToY(-24));
+                ctx.fillText('Soft', 8, mapDbToY(-40));
+
+                const now = Date.now();
+                if (now - metricsUpdateRef.current > 180) {
+                    metricsUpdateRef.current = now;
+                    setVoiceMetrics(prev => ({
+                        ...prev,
+                        loudnessDb,
+                        pitchHz: pitchHz > 0 ? pitchHz : prev.pitchHz,
+                        speechRateWpm,
+                        qualityScore,
+                    }));
+                }
+
                 // Check for silence
-                const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+                const average = frequencyData.reduce((a, b) => a + b, 0) / bufferLength;
                 if (average < 10) {
                     if (silenceStartRef.current === null) silenceStartRef.current = Date.now();
                     else {
@@ -198,6 +395,15 @@ export const SkillSessionRecordings: React.FC = () => {
 
             isRecordingRef.current = true;
             isCurrentlyPausedRef.current = false;
+            recordingStartRef.current = Date.now();
+            metricsUpdateRef.current = 0;
+            loudnessHistoryRef.current = [];
+            setVoiceMetrics({
+                loudnessDb: -60,
+                pitchHz: 0,
+                speechRateWpm: 0,
+                qualityScore: 0,
+            });
             drawWaveform();
 
             mediaRecorder.start();
@@ -221,8 +427,7 @@ export const SkillSessionRecordings: React.FC = () => {
             if (audioContextRef.current) audioContextRef.current.close();
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
-            // Reset wave data
-            waveDataRef.current = new Array(64).fill(0);
+            // Keep the captured history visible until user retakes for better feedback review.
         }
     };
 
@@ -301,19 +506,21 @@ export const SkillSessionRecordings: React.FC = () => {
         <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-black">
             <div className="flex-1 flex flex-col animate-in slide-in-from-bottom-8 duration-500">
                 {/* Header */}
-                <div className="px-6 py-4">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate(-1)}
-                        className="group flex items-center gap-2 text-zinc-400 hover:text-white"
-                    >
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                        Back
-                    </Button>
+                <div className="py-4">
+                    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate(-1)}
+                            className="group flex items-center gap-2 text-zinc-400 hover:text-white"
+                        >
+                            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                            Back
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex-1 flex flex-col items-center justify-center pb-12">
                     <div className="text-center space-y-3 mb-10">
                         <div className="inline-flex items-center justify-center p-4 bg-zinc-900 rounded-2xl text-green-500 mb-2 border border-zinc-800">
                             <Brain className="h-8 w-8" />
@@ -345,12 +552,12 @@ export const SkillSessionRecordings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Waveform Visualizer */}
-                                <div className="relative h-24 mb-8 rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+                                {/* Live Loudness Time-Series */}
+                                <div className="relative h-32 mb-4 rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
                                     <canvas
                                         ref={canvasRef}
                                         width={600}
-                                        height={96}
+                                        height={128}
                                         className="w-full h-full"
                                     />
                                     {!isRecording && (
@@ -374,6 +581,91 @@ export const SkillSessionRecordings: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                <p className="text-[11px] text-zinc-500 mb-8 text-center uppercase tracking-[0.22em]">
+                                    Live loudness time series and voice coaching
+                                </p>
+
+                                {isRecording && (
+                                    <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 md:p-5">
+                                        {(() => {
+                                            const loudnessStatus = getBandStatus(voiceMetrics.loudnessDb, -32, -16);
+                                            const pitchStatus = getPitchStatus(voiceMetrics.pitchHz);
+                                            const speedStatus = getBandStatus(voiceMetrics.speechRateWpm || NaN, 110, 160);
+
+                                            const allGood = loudnessStatus === 'good' && pitchStatus === 'good' && speedStatus === 'good';
+                                            const hasHardWarning = loudnessStatus === 'high' || speedStatus === 'high' || pitchStatus === 'high';
+
+                                            const overallText = allGood
+                                                ? 'Perfect voice zone: keep this level.'
+                                                : hasHardWarning
+                                                    ? 'Voice needs correction: follow the guidance below.'
+                                                    : 'Good progress: tune one metric to reach perfect zone.';
+
+                                            const overallColor = allGood
+                                                ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/35'
+                                                : hasHardWarning
+                                                    ? 'text-orange-200 bg-orange-500/10 border-orange-500/35'
+                                                    : 'text-amber-200 bg-amber-500/10 border-amber-500/35';
+
+                                            return (
+                                                <>
+                                                    <div className={cn('mb-4 rounded-xl border px-3 py-2 text-xs md:text-sm font-medium', overallColor)}>
+                                                        {overallText}
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                        <div className={cn('rounded-xl border p-3 md:p-4 ring-1', statusStyles[loudnessStatus].ring, statusStyles[loudnessStatus].chip)}>
+                                                            <div className="text-[11px] uppercase tracking-[0.18em] opacity-80">Loudness</div>
+                                                            <div className="mt-1 text-2xl font-semibold tabular-nums">
+                                                                {voiceMetrics.loudnessDb.toFixed(1)} dB
+                                                            </div>
+                                                            <div className="mt-1 text-xs opacity-85">Target: -32 dB to -16 dB</div>
+                                                            <div className="mt-2 text-xs font-medium">
+                                                                {loudnessStatus === 'good' && 'Great volume. Keep it steady.'}
+                                                                {loudnessStatus === 'low' && 'Speak louder and move closer to mic.'}
+                                                                {loudnessStatus === 'high' && 'Reduce force slightly to avoid clipping.'}
+                                                                {loudnessStatus === 'unknown' && 'Start speaking to calibrate loudness.'}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={cn('rounded-xl border p-3 md:p-4 ring-1', statusStyles[pitchStatus].ring, statusStyles[pitchStatus].chip)}>
+                                                            <div className="text-[11px] uppercase tracking-[0.18em] opacity-80">Pitch</div>
+                                                            <div className="mt-1 text-2xl font-semibold tabular-nums">
+                                                                {voiceMetrics.pitchHz > 0 ? `${Math.round(voiceMetrics.pitchHz)} Hz` : '--'}
+                                                            </div>
+                                                            <div className="mt-1 text-xs opacity-85">Target: 110 Hz to 230 Hz</div>
+                                                            <div className="mt-2 text-xs font-medium">
+                                                                {pitchStatus === 'good' && 'Natural tone detected.'}
+                                                                {pitchStatus === 'low' && 'Raise tone slightly for more clarity.'}
+                                                                {pitchStatus === 'high' && 'Lower tone slightly; avoid strain.'}
+                                                                {pitchStatus === 'unknown' && 'Pitch appears after continuous voice.'}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={cn('rounded-xl border p-3 md:p-4 ring-1', statusStyles[speedStatus].ring, statusStyles[speedStatus].chip)}>
+                                                            <div className="text-[11px] uppercase tracking-[0.18em] opacity-80">Speaking Speed</div>
+                                                            <div className="mt-1 text-2xl font-semibold tabular-nums">
+                                                                {voiceMetrics.speechRateWpm > 0 ? `${Math.round(voiceMetrics.speechRateWpm)} WPM` : '--'}
+                                                            </div>
+                                                            <div className="mt-1 text-xs opacity-85">Target: 110 to 160 WPM</div>
+                                                            <div className="mt-2 text-xs font-medium">
+                                                                {speedStatus === 'good' && 'Excellent pace for comprehension.'}
+                                                                {speedStatus === 'low' && 'Increase pace slightly; avoid long gaps.'}
+                                                                {speedStatus === 'high' && 'Slow down to improve clarity.'}
+                                                                {speedStatus === 'unknown' && 'Speed appears when transcript is captured.'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4 text-xs text-zinc-400">
+                                                        Voice quality score: <span className={cn('font-semibold', voiceMetrics.qualityScore >= 85 ? 'text-emerald-300' : voiceMetrics.qualityScore >= 65 ? 'text-amber-300' : 'text-orange-300')}>{voiceMetrics.qualityScore}/100</span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
 
                                 {/* Live Stats */}
                                 {isRecording && (

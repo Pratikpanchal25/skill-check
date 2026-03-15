@@ -176,8 +176,8 @@ export const SkillSessionAttempts: React.FC = () => {
     return (
         <div className="bg-background lg:overflow-hidden lg:h-full flex flex-col">
             {/* Header */}
-            <div className="border-b border-border/30 px-6 py-5">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="border-b border-border/30 py-5">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -200,7 +200,7 @@ export const SkillSessionAttempts: React.FC = () => {
             {/* Scroll Area (so scroll works on empty space too) */}
             <div className="flex-1 lg:min-h-0 lg:overflow-y-auto overscroll-contain [scrollbar-gutter:stable] hidden-scrollbar">
                 {/* Main Grid - 2 Columns */}
-                <div className="max-w-6xl mx-auto w-full flex flex-col lg:flex-row gap-6 px-6 py-6 pb-10">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-6 py-6 pb-10">
 
                     {/* ================= LEFT COLUMN - Attempts Sidebar (Static) ================= */}
                     <div className="w-full lg:w-[320px] shrink-0 space-y-6 lg:sticky lg:top-6 lg:self-start">
