@@ -183,7 +183,7 @@ export const SkillCheck: React.FC = () => {
                         </Button>
                         <div className="h-6 w-px bg-border/50" />
                         <h1 className="text-xl font-semibold text-foreground">
-                            New Skill Check
+                            New Skillcraft
                         </h1>
                     </div>
                 </div>
@@ -370,7 +370,7 @@ export const SkillCheck: React.FC = () => {
                             ) : (
                                 <Sparkles className="h-4 w-4 mr-2" />
                             )}
-                            {loading ? 'Starting...' : 'Start Skill Check'}
+                            {loading ? 'Starting...' : 'Start Skillcraft'}
                         </Button>
 
                         {existingSession && (

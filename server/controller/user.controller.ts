@@ -243,6 +243,54 @@ export async function getActivity(req: AuthRequest, res: CombinedResponseType): 
     }
 }
 
+export async function getActivityCount(req: AuthRequest, res: CombinedResponseType): Promise<void> {
+    try {
+        const userId = req.user?._id
+
+        if (!userId) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
+
+        const counts = await UserService.getUserActivityCount(userId as string)
+
+        const data = {
+            success: true,
+            counts
+        }
+
+        successResponse(res, data, 'User activity count retrieved successfully')
+        return
+    } catch (error) {
+        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to retrieve user activity count')
+        return
+    }
+}
+
+export async function getDashboard(req: AuthRequest, res: CombinedResponseType): Promise<void> {
+    try {
+        const userId = req.user?._id
+
+        if (!userId) {
+            errorResponseWithStatusCode(res, 'Unauthorized', 401)
+            return
+        }
+
+        const dashboard = await UserService.getUserDashboardData(userId as string)
+
+        const data = {
+            success: true,
+            ...dashboard
+        }
+
+        successResponse(res, data, 'User dashboard retrieved successfully')
+        return
+    } catch (error) {
+        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to retrieve user dashboard')
+        return
+    }
+}
+
 export async function deleteMe(req: AuthRequest, res: CombinedResponseType): Promise<void> {
     try {
         const userId = req.user?._id

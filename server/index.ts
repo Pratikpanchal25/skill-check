@@ -25,7 +25,7 @@ app.use("/api/skills", skillRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Skillcheck API is running");
+  res.send("Skillcraft API is running");
 });
 
 app.listen(PORT, () => {

@@ -67,10 +67,12 @@ export const Login: React.FC = () => {
                 {/* Logo */}
                 <div className="flex items-center gap-3">
                     <div className="relative">
-                        <img src="/logo.png" alt="Skillcheck" className="h-10 w-auto relative z-10" />
+                        <img src="/logo.png" alt="Skillcraft" className="h-12 w-auto relative z-10" style={{ filter: 'drop-shadow(0 0 5px rgba(139,92,246,0.45)) drop-shadow(0 0 10px rgba(34,211,238,0.2))' }} />
                         <div className="absolute inset-0 bg-primary/20 blur-xl" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-foreground">Skillcheck</span>
+                    <span className="text-xl tracking-tight">
+                        <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
+                    </span>
                 </div>
 
                 {/* Main Content */}
@@ -106,7 +108,7 @@ export const Login: React.FC = () => {
 
                 {/* Footer */}
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>© 2026 Skillcheck</span>
+                    <span>© 2026 Skillcraft</span>
                     <span className="w-1 h-1 rounded-full bg-border" />
                     <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
                     <span className="w-1 h-1 rounded-full bg-border" />
@@ -119,8 +121,10 @@ export const Login: React.FC = () => {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex items-center gap-3 mb-10">
-                        <img src="/logo.png" alt="Skillcheck" className="h-10 w-auto" />
-                        <span className="text-xl font-bold tracking-tight text-foreground">Skillcheck</span>
+                        <img src="/logo.png" alt="Skillcraft" className="h-12 w-auto" style={{ filter: 'drop-shadow(0 0 5px rgba(139,92,246,0.45)) drop-shadow(0 0 10px rgba(34,211,238,0.2))' }} />
+                        <span className="text-xl tracking-tight">
+                            <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
+                        </span>
                     </div>
 
                     {/* Login Card */}
@@ -210,7 +214,7 @@ export const Login: React.FC = () => {
                                     <div className="w-full border-t border-border" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-card px-3 text-muted-foreground">New to Skillcheck?</span>
+                                    <span className="bg-card px-3 text-muted-foreground">New to Skillcraft?</span>
                                 </div>
                             </div>
 

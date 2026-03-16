@@ -23,27 +23,21 @@ export const DashboardLayout: React.FC = () => {
     return (
         <div className="h-screen w-full bg-background text-foreground transition-colors duration-300 flex flex-col overflow-hidden">
             {/* Top Navigation */}
-            <header className="bg-card border-b border-border z-10 shadow-sm shrink-0">
+            <header className="bg-background/35 backdrop-blur-md border-b border-border/50 z-10 shadow-sm shrink-0">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16 sm:h-20">
+                    <div className="flex justify-between items-center h-16">
                         {/* Logo */}
                         <div className="flex items-center">
-                            <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 cursor-pointer">
-                                <img src="/logo.png" alt="Skill Check" className="h-10 sm:h-20 w-auto shrink-0" />
-                                <div className="flex sm:hidden flex-col leading-none">
-                                    <span className="text-sm font-black tracking-wide uppercase">SkillCraft</span>
-                                    <span className="h-0.5 w-full rounded-full bg-linear-to-r from-blue-600 via-sky-500 to-emerald-400 mt-1" />
-                                </div>
-                                <div className="hidden sm:flex flex-col leading-none">
-                                    <span className="text-2xl font-black tracking-wide uppercase">SkillCraft</span>
-                                    <span className="h-1 w-full rounded-full bg-linear-to-r from-blue-600 via-sky-500 to-emerald-400 mt-1" />
-                                    <span className="mt-1 text-[11px] font-medium tracking-[0.35em] text-muted-foreground uppercase">AI-Powered Feedback</span>
-                                </div>
+                            <Link to="/dashboard" className="-ml-2 sm:-ml-1 flex items-center space-x-2 cursor-pointer">
+                                <img src="/logo.png" alt="Skillcraft" className="h-14 w-auto" style={{ filter: 'drop-shadow(0 0 5px rgba(139,92,246,0.45)) drop-shadow(0 0 10px rgba(34,211,238,0.2))' }} />
+                                <span className="text-xl tracking-tight leading-none">
+                                    <span className="font-semibold text-slate-900 dark:text-foreground">Skill</span><span className="font-extrabold bg-linear-to-r from-blue-700 to-cyan-600 dark:from-violet-400 dark:to-cyan-300 bg-clip-text text-transparent">craft</span>
+                                </span>
                             </Link>
                         </div>
 
                         {/* Right Side */}
-                        <div className="flex items-center space-x-2 sm:space-x-4">
+                        <div className="flex items-center space-x-4">
                             <ModeToggle />
                             <Link to="/dashboard/profile" className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border transition-colors group cursor-pointer">
                                 <User className="h-4 w-4 group-hover:text-primary transition-colors" />

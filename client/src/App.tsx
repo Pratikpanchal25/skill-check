@@ -71,7 +71,7 @@ function AppContent() {
         {/* Dashboard routes */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="skillcheck" element={<SkillCheck />} />
+          <Route path="skillcraft" element={<SkillCheck />} />
           <Route path="sessions" element={<AllSessions />} />
           <Route path="session/:id" element={<SkillSessionAttempts />} />
           <Route path="session/:id/record" element={<SkillSessionRecordings />} />
@@ -89,7 +89,7 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="skillcheck-theme" attribute="class">
+    <ThemeProvider defaultTheme="system" storageKey="skillcraft-theme" attribute="class">
       <Provider store={store}>
         <AppContent />
       </Provider>

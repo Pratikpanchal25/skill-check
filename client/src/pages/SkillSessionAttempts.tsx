@@ -57,7 +57,7 @@ export const SkillSessionAttempts: React.FC = () => {
                 setSession(summary.session);
                 setAttempts(summary.attempts || []);
             } catch {
-                navigate('/dashboard/skillcheck');
+                navigate('/dashboard/skillcraft');
             } finally {
                 setLoading(false);
             }
@@ -174,7 +174,7 @@ export const SkillSessionAttempts: React.FC = () => {
     };
 
     return (
-        <div className="bg-background lg:overflow-hidden lg:h-full flex flex-col">
+        <div className="bg-transparent lg:overflow-hidden lg:h-full flex flex-col">
             {/* Header */}
             <div className="border-b border-border/30 py-5">
                 <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -183,7 +183,7 @@ export const SkillSessionAttempts: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => navigate(-1)}
-                            className="group flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                            className="group -ml-2 sm:-ml-1 h-9 px-2.5 flex items-center gap-2 text-muted-foreground hover:text-foreground"
                         >
                             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                             Back
@@ -205,7 +205,7 @@ export const SkillSessionAttempts: React.FC = () => {
                     {/* ================= LEFT COLUMN - Attempts Sidebar (Static) ================= */}
                     <div className="w-full lg:w-[320px] shrink-0 space-y-6 lg:sticky lg:top-6 lg:self-start">
                         {/* Attempts Card */}
-                        <div className="border border-border/50 rounded-xl bg-card">
+                        <div className="border border-border/50 rounded-xl bg-transparent">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between">
                                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -279,7 +279,7 @@ export const SkillSessionAttempts: React.FC = () => {
 
                         {/* Quick Stats Card */}
                         {hasAttempts && (
-                            <div className="border border-border/50 rounded-xl bg-card p-5">
+                            <div className="border border-border/50 rounded-xl bg-transparent p-5">
                                 <h3 className="text-sm font-semibold text-foreground mb-4">
                                     Session Stats
                                 </h3>
@@ -312,7 +312,7 @@ export const SkillSessionAttempts: React.FC = () => {
                     <div className="flex-1 min-w-0 space-y-6 pr-3">
 
                         {!hasAttempts ? (
-                            <div className="border border-dashed border-border rounded-xl bg-linear-to-br from-card to-primary/5 flex flex-col items-center justify-center py-24">
+                            <div className="border border-dashed border-border rounded-xl bg-transparent flex flex-col items-center justify-center py-24">
                                 <div className="relative mb-8">
                                     <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
                                     <div className="relative p-5 bg-primary/10 rounded-2xl">
@@ -335,8 +335,8 @@ export const SkillSessionAttempts: React.FC = () => {
                         ) : (
                             <>
                                 {/* Hero Score Card */}
-                                <div className="border border-border/50 rounded-xl bg-linear-to-br from-card via-card to-primary/5 overflow-hidden">
-                                    <div className="px-4 sm:px-8 py-6 sm:py-8 border-b border-border/30 bg-linear-to-r from-transparent via-primary/5 to-transparent">
+                                <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
+                                    <div className="px-4 sm:px-8 py-6 sm:py-8 border-b border-border/30 bg-transparent">
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
                                             <div className="flex items-center gap-4 sm:gap-5">
                                                 <div className="text-4xl sm:text-6xl">
@@ -452,7 +452,7 @@ export const SkillSessionAttempts: React.FC = () => {
 
                                 {/* Delivery Feedback Section - only show when not pending */}
                                 {!isPending && evaluation?.deliveryFeedback && typeof evaluation.delivery === 'number' && (
-                                    <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                    <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                                         <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-orange-500/5 to-transparent">
                                             <h3 className="text-sm font-semibold flex items-center gap-2">
                                                 <div className="p-1.5 rounded-lg bg-orange-500/10">
@@ -471,7 +471,7 @@ export const SkillSessionAttempts: React.FC = () => {
 
                                 {/* Feedback Section - only show when not pending */}
                                 {!isPending && evaluation?.feedback && (
-                                    <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                    <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                                         <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-primary/5 to-transparent">
                                             <h3 className="text-sm font-semibold flex items-center gap-2">
                                                 <div className="p-1.5 rounded-lg bg-primary/10">
@@ -492,7 +492,7 @@ export const SkillSessionAttempts: React.FC = () => {
                                 {!isPending && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                                         {/* Missing Concepts */}
-                                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                        <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                                             <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-red-500/5 to-transparent">
                                                 <h3 className="text-sm font-semibold flex items-center gap-2">
                                                     <div className="p-1.5 rounded-lg bg-red-500/10">
@@ -531,7 +531,7 @@ export const SkillSessionAttempts: React.FC = () => {
                                         </div>
 
                                         {/* Improvement Suggestions */}
-                                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                        <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                                             <div className="px-6 py-4 border-b border-border/30 bg-linear-to-r from-primary/5 to-transparent">
                                                 <h3 className="text-sm font-semibold flex items-center gap-2">
                                                     <div className="p-1.5 rounded-lg bg-primary/10">
@@ -572,7 +572,7 @@ export const SkillSessionAttempts: React.FC = () => {
                                 )}
 
                                 {/* Your Response */}
-                                <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                                <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                                     <div className="px-6 py-4 border-b border-border/30 flex items-center justify-between">
                                         <h3 className="text-sm font-semibold flex items-center gap-2">
                                             <div className="p-1.5 rounded-lg bg-muted">
@@ -607,28 +607,28 @@ export const SkillSessionAttempts: React.FC = () => {
 const ScoreCard = ({ label, value, color }: { label: string; value?: number; color: 'blue' | 'green' | 'purple' | 'orange' }) => {
     const colors = {
         blue: {
-            bg: 'bg-blue-500/10',
-            text: 'text-blue-600 dark:text-blue-400',
-            border: 'border-blue-500/20',
-            ring: 'ring-blue-500/20'
+            bg: 'bg-transparent',
+            text: 'text-blue-700 dark:text-blue-300',
+            border: 'border-blue-300/60 dark:border-blue-800/55',
+            ring: 'ring-blue-300/50 dark:ring-blue-700/45'
         },
         green: {
-            bg: 'bg-green-500/10',
-            text: 'text-green-600 dark:text-green-400',
-            border: 'border-green-500/20',
-            ring: 'ring-green-500/20'
+            bg: 'bg-transparent',
+            text: 'text-emerald-700 dark:text-emerald-300',
+            border: 'border-emerald-300/60 dark:border-emerald-800/55',
+            ring: 'ring-emerald-300/50 dark:ring-emerald-700/45'
         },
         purple: {
-            bg: 'bg-purple-500/10',
-            text: 'text-purple-600 dark:text-purple-400',
-            border: 'border-purple-500/20',
-            ring: 'ring-purple-500/20'
+            bg: 'bg-transparent',
+            text: 'text-violet-700 dark:text-violet-300',
+            border: 'border-violet-300/60 dark:border-violet-800/55',
+            ring: 'ring-violet-300/50 dark:ring-violet-700/45'
         },
         orange: {
-            bg: 'bg-orange-500/10',
-            text: 'text-orange-600 dark:text-orange-400',
-            border: 'border-orange-500/20',
-            ring: 'ring-orange-500/20'
+            bg: 'bg-transparent',
+            text: 'text-amber-700 dark:text-amber-300',
+            border: 'border-amber-300/60 dark:border-amber-800/55',
+            ring: 'ring-amber-300/50 dark:ring-amber-700/45'
         }
     };
 
@@ -672,17 +672,17 @@ const ScoreBar = ({
     highlight?: boolean;
 }) => {
     const colors = {
-        blue: 'bg-blue-500',
-        green: 'bg-green-500',
-        purple: 'bg-purple-500',
-        orange: 'bg-orange-500'
+        blue: 'bg-blue-600 dark:bg-blue-500',
+        green: 'bg-emerald-600 dark:bg-emerald-500',
+        purple: 'bg-violet-600 dark:bg-violet-500',
+        orange: 'bg-amber-600 dark:bg-amber-500'
     };
 
     const bgColors = {
-        blue: 'bg-blue-500/20',
-        green: 'bg-green-500/20',
-        purple: 'bg-purple-500/20',
-        orange: 'bg-orange-500/20'
+        blue: 'bg-blue-200/60 dark:bg-blue-950/55',
+        green: 'bg-emerald-200/60 dark:bg-emerald-950/55',
+        purple: 'bg-violet-200/60 dark:bg-violet-950/55',
+        orange: 'bg-amber-200/60 dark:bg-amber-950/55'
     };
 
     const deltaText =

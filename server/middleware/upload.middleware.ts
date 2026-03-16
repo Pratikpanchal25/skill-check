@@ -42,7 +42,7 @@ export const uploadToCloudinary = async (req: Request, _res: Response, next: Nex
         const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
                 {
-                    folder: "skillcheck/avatars",
+                    folder: "skillcraft/avatars",
                     transformation: [
                         { width: 400, height: 400, crop: "fill", gravity: "face" },
                         { quality: "auto", fetch_format: "auto" },

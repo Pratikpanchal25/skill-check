@@ -160,9 +160,6 @@
   * {
     @apply border-border;
   }
-  html {
-    scrollbar-gutter: stable;
-  }
   body {
     @apply bg-background text-foreground;
   }
@@ -218,4 +215,104 @@
   input:focus, textarea:focus {
     box-shadow: 0 0 0 2px hsl(216 80% 28% / 0.15);
   }
+}
+
+/* ============================================ */
+/* Global Site Background (background.png)       */
+/* ============================================ */
+
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-color: #030b1a;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Global tint layer to keep content readable over background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(243, 247, 255, 0.90);
+}
+
+/* Light mode — cards become subtly translucent */
+.bg-card {
+  background-color: transparent !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.bg-popover {
+  background-color: transparent !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-background {
+  background-color: transparent !important;
+}
+
+/* Dark mode — let the background breathe through a dark tint */
+.dark body::before {
+  background: rgba(1, 4, 14, 0.82);
+}
+
+/* Dark mode — glassmorphism for every card / surface */
+.dark .bg-card {
+  background-color: transparent !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dark .bg-popover {
+  background-color: transparent !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Dark mode — full-page wrappers become transparent */
+.dark .bg-background {
+  background-color: transparent !important;
+}
+
+/* Dark mode — muted surfaces keep a subtle tinted translucency */
+.dark .bg-muted {
+  background-color: rgba(7, 16, 42, 0.62) !important;
+}
+
+.dark .bg-muted\/50 {
+  background-color: rgba(7, 16, 42, 0.56) !important;
+}
+
+.dark .bg-muted\/40 {
+  background-color: rgba(7, 16, 42, 0.46) !important;
+}
+
+.dark .bg-muted\/30 {
+  background-color: rgba(7, 16, 42, 0.36) !important;
+}
+
+.dark .bg-muted\/20 {
+  background-color: rgba(7, 16, 42, 0.26) !important;
 }

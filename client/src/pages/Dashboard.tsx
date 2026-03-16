@@ -29,6 +29,7 @@ export const Dashboard: React.FC = () => {
     const {
         overview,
         activities,
+        counts,
         overviewFetchedAt,
         activitiesFetchedAt,
         overviewLoading,
@@ -38,8 +39,8 @@ export const Dashboard: React.FC = () => {
     const notFetchedYet = Boolean(user?._id) && (!overviewFetchedAt || !activitiesFetchedAt);
     const loading = overviewLoading || activitiesLoading || notFetchedYet;
     const stats = {
-        sessions: activities.length,
-        skillsPracticed: overview.length
+        sessions: counts.sessions || activities.length,
+        skillsPracticed: counts.skillsPracticed || overview.length
     };
 
     useEffect(() => {
@@ -77,6 +78,14 @@ export const Dashboard: React.FC = () => {
         .filter(a => a.evaluated && a.score !== null)
         .reverse();
 
+    const topScoringActivities = [...evaluatedActivities]
+        .sort((a, b) => {
+            const scoreDiff = Number(b.score ?? 0) - Number(a.score ?? 0);
+            if (scoreDiff !== 0) return scoreDiff;
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        })
+        .slice(0, 6);
+
     // Get unique skills
     const uniqueSkills = [...new Set(evaluatedActivities.map(a => a.skill))];
 
@@ -97,10 +106,10 @@ export const Dashboard: React.FC = () => {
     const graphHeight = 280;
 
     return (
-        <div className="bg-background h-full flex flex-col overflow-hidden">
+        <div className="bg-transparent h-full flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="py-5 sm:py-6 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 shrink-0">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full shrink-0">
+                <h1 className="text-3xl font-bold text-foreground">
                     Hi, {user?.name}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -109,14 +118,14 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-6 flex-1 min-h-0 overflow-y-auto thin-scrollbar">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:h-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 flex-1 min-h-0 w-full overflow-y-auto thin-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
 
                     {/* Left Column */}
-                    <div className="flex flex-col gap-4 sm:gap-6 min-h-0 lg:min-h-0">
+                    <div className="flex flex-col gap-6 min-h-0">
                         {/* Stats Row */}
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4 shrink-0">
-                            <div className="border border-border/50 rounded-xl bg-card px-4 sm:px-5 py-3 sm:py-4">
+                        <div className="flex gap-4 shrink-0">
+                            <div className="flex-1 border border-border/50 rounded-xl bg-transparent px-5 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-primary/10 text-primary">
                                         <Mic className="h-4 w-4" />
@@ -127,7 +136,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="border border-border/50 rounded-xl bg-card px-4 sm:px-5 py-3 sm:py-4">
+                            <div className="flex-1 border border-border/50 rounded-xl bg-transparent px-5 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
                                         <BrainCircuit className="h-4 w-4" />
@@ -141,26 +150,26 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Explain a Concept Card */}
-                        <div className="border border-border/50 rounded-xl bg-card p-4 sm:p-6 shrink-0">
+                        <div className="border border-border/50 rounded-xl bg-transparent p-6 shrink-0">
                             <h3 className="text-lg font-semibold mb-2">Explain a Concept</h3>
                             <p className="text-sm text-muted-foreground mb-5">
                                 Pick a technical topic and explain it in your own words. Our AI evaluates clarity, correctness, depth, and delivery.
                             </p>
-                            <Button onClick={() => navigate('/dashboard/skillcheck')} className="w-full cursor-pointer">
-                                Start Skillcheck
+                            <Button onClick={() => navigate('/dashboard/skillcraft')} className="w-full cursor-pointer">
+                                Start Skillcraft
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
 
-                        {/* Recent Sessions */}
-                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden lg:flex-1 lg:flex lg:flex-col min-h-75 lg:min-h-0 shrink-0 lg:shrink">
+                        {/* Best Scoring Sessions */}
+                        <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden flex-1 flex flex-col min-h-0">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between shrink-0">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent Sessions</h3>
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Best Scoring Sessions</h3>
                                 <button
                                     onClick={() => navigate('/dashboard/sessions')}
                                     className="text-xs text-primary hover:underline cursor-pointer"
                                 >
-                                    View All ({activities.length})
+                                    View All ({counts.sessions || activities.length})
                                 </button>
                             </div>
                             <div className="divide-y divide-border/30 overflow-y-auto flex-1">
@@ -168,8 +177,8 @@ export const Dashboard: React.FC = () => {
                                     <div className="flex justify-center py-12">
                                         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                                     </div>
-                                ) : activities.length ? (
-                                    activities.slice(0, 6).map(activity => (
+                                ) : topScoringActivities.length ? (
+                                    topScoringActivities.map(activity => (
                                         <button
                                             key={activity.id}
                                             onClick={() => navigate(activity.evaluated ? `/dashboard/session/${activity.id}` : `/dashboard/session/${activity.id}/record`)}
@@ -191,15 +200,9 @@ export const Dashboard: React.FC = () => {
                                                     </p>
                                                 </div>
                                             </div>
-                                            {activity.evaluated ? (
-                                                <span className={cn("text-sm font-bold", getScoreColor(activity.score ?? 0))}>
-                                                    {Number(activity.score ?? 0).toFixed(1)}/10
-                                                </span>
-                                            ) : (
-                                                <span className="text-[10px] font-bold uppercase bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded">
-                                                    Pending
-                                                </span>
-                                            )}
+                                            <span className={cn("text-sm font-bold", getScoreColor(activity.score ?? 0))}>
+                                                {Number(activity.score ?? 0).toFixed(1)}/10
+                                            </span>
                                         </button>
                                     ))
                                 ) : (
@@ -207,9 +210,9 @@ export const Dashboard: React.FC = () => {
                                         <div className="p-3 rounded-full bg-muted/50 w-fit mx-auto mb-3">
                                             <Mic className="h-6 w-6 text-muted-foreground/50" />
                                         </div>
-                                        <p className="font-medium text-sm">No sessions yet</p>
+                                        <p className="font-medium text-sm">No scored sessions yet</p>
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            Start your first skill check
+                                            Complete evaluated sessions to see your best scores
                                         </p>
                                     </div>
                                 )}
@@ -220,7 +223,7 @@ export const Dashboard: React.FC = () => {
                     {/* Right Column */}
                     <div className="flex flex-col gap-6 min-h-0 lg:min-h-0">
                         {/* Progress Graph */}
-                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden">
+                        <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 rounded-lg bg-blue-500/10">
@@ -346,7 +349,7 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Skills to Improve Card */}
-                        <div className="border border-border/50 rounded-xl bg-card overflow-hidden lg:flex-1 min-h-75 lg:min-h-0 flex flex-col">
+                        <div className="border border-border/50 rounded-xl bg-transparent overflow-hidden lg:flex-1 min-h-75 lg:min-h-0 flex flex-col">
                             <div className="px-5 py-4 border-b border-border/30 flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 rounded-lg bg-orange-500/10">
@@ -384,7 +387,7 @@ export const Dashboard: React.FC = () => {
                                     return (
                                         <div className="space-y-4">
                                             {skillsToImprove.map((item, i) => (
-                                                <div key={i} className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                                                <div key={i} className="p-3 rounded-lg bg-transparent border border-border/50">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <span className="text-sm font-medium">{item.skill}</span>
                                                         <span className={cn("text-xs font-bold", getScoreColor(item.avgScore))}>

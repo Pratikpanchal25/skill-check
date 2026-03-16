@@ -24,7 +24,7 @@ app.use("/api/sessions", session_routes_1.default);
 app.use("/api/skills", skill_routes_1.default);
 app.use("/api/analytics", analytics_routes_1.default);
 app.get("/", (req, res) => {
-    res.send("Skillcheck API is running");
+    res.send("Skillcraft API is running");
 });
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

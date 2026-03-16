@@ -167,7 +167,7 @@ export const AllSessions: React.FC = () => {
                         <div>
                             <h1 className="text-3xl font-bold text-foreground">All Sessions</h1>
                             <p className="text-sm text-muted-foreground mt-1">
-                                View and manage all your skill check sessions
+                                View and manage all your skillcraft sessions
                             </p>
                         </div>
                     </div>
@@ -348,7 +348,7 @@ export const AllSessions: React.FC = () => {
                             <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
                                 {searchQuery || filterBy !== 'all'
                                     ? 'Try adjusting your search or filters'
-                                    : 'Start your first skill check to see sessions here'}
+                                    : 'Start your first skillcraft to see sessions here'}
                             </p>
                             {(searchQuery || filterBy !== 'all') && (
                                 <Button

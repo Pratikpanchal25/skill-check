@@ -153,7 +153,7 @@ export const SkillSession: React.FC = () => {
             } catch (error) {
                 console.error('Failed to fetch session summary', error);
                 toast.error('Failed to load session');
-                navigate('/dashboard/skillcheck');
+                navigate('/dashboard/skillcraft');
             } finally {
                 setLoading(false);
             }
