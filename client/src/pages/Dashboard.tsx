@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BadgeCheck, BrainCircuit, Github, Mic, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BrainCircuit, Download, Github, Mic, Share2, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchDashboardData } from '@/store/slices/dataSlice';
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 import {
     Line,
     XAxis,
@@ -24,6 +26,9 @@ export const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
+    const [skillIdByName, setSkillIdByName] = useState<Record<string, string>>({});
+    const [downloadingSessionId, setDownloadingSessionId] = useState<string | null>(null);
+    const [publicUsername, setPublicUsername] = useState<string | null>(null);
 
     // Get data from Redux store
     const {
@@ -104,6 +109,105 @@ export const Dashboard: React.FC = () => {
     const chartData = Array.from(chartDataMap.values());
 
     const graphHeight = 280;
+
+    const resolveSkillId = async (skillName: string): Promise<string | null> => {
+        if (skillIdByName[skillName]) return skillIdByName[skillName];
+
+        const res = await api.get('/skills');
+        const skills = res.data?.data?.skills ?? [];
+        const match = skills.find((item: any) => String(item?.name || '').toLowerCase() === skillName.toLowerCase());
+
+        if (!match?._id) return null;
+
+        const next = { ...skillIdByName, [skillName]: String(match._id) };
+        setSkillIdByName(next);
+        return String(match._id);
+    };
+
+    const resolvePublicUsername = async (): Promise<string | null> => {
+        if (publicUsername) return publicUsername;
+
+        try {
+            const res = await api.get('/github/profile');
+            const username = res.data?.data?.githubProfile?.username;
+            if (typeof username === 'string' && username.trim()) {
+                setPublicUsername(username);
+                return username;
+            }
+        } catch {
+            // fall through to app identity fallback below
+        }
+
+        const fallback = user?.name || user?.email || null;
+        if (fallback) setPublicUsername(fallback);
+        return fallback;
+    };
+
+    const handleDownloadSkillCard = async (skillName: string, sessionId: string) => {
+        const identity = await resolvePublicUsername();
+        if (!identity) {
+            toast.error('Unable to identify user for certificate download');
+            return;
+        }
+
+        setDownloadingSessionId(sessionId);
+        try {
+            const skillId = await resolveSkillId(skillName);
+            if (!skillId) {
+                toast.error('Could not map this skill to a certificate');
+                return;
+            }
+
+            const res = await api.get(`/skills/${skillId}/certificate`, {
+                responseType: 'blob',
+                params: { username: identity },
+            });
+
+            const url = window.URL.createObjectURL(res.data);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `SkillCraft-${skillName}-certificate.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Skill card downloaded');
+        } catch (error) {
+            toast.error('Download failed. Please try again.');
+        } finally {
+            setDownloadingSessionId(null);
+        }
+    };
+
+    const handleShareSkillCard = async (skillName: string) => {
+        const identity = await resolvePublicUsername();
+        if (!identity) {
+            toast.error('Unable to create share link');
+            return;
+        }
+
+        const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(identity)}/${encodeURIComponent(skillName)}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `My ${skillName} SkillCraft score`,
+                    text: `Check out my verified ${skillName} skill card on SkillCraft.`,
+                    url: verifyUrl,
+                });
+                return;
+            } catch {
+                // Fall back to clipboard when native share is cancelled/unsupported.
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(verifyUrl);
+            toast.success('Verification link copied');
+        } catch {
+            toast.error('Could not copy share link');
+        }
+    };
 
     return (
         <div className="bg-transparent h-full flex flex-col overflow-hidden">
@@ -198,9 +302,17 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 ) : topScoringActivities.length ? (
                                     topScoringActivities.map(activity => (
-                                        <button
+                                        <div
                                             key={activity.id}
                                             onClick={() => navigate(activity.evaluated ? `/dashboard/session/${activity.id}` : `/dashboard/session/${activity.id}/record`)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    navigate(activity.evaluated ? `/dashboard/session/${activity.id}` : `/dashboard/session/${activity.id}/record`);
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
                                             className="w-full px-5 py-3 flex justify-between items-center text-left hover:bg-muted/40 transition cursor-pointer"
                                         >
                                             <div className="flex gap-3 min-w-0">
@@ -219,10 +331,39 @@ export const Dashboard: React.FC = () => {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <span className={cn("text-sm font-bold", getScoreColor(activity.score ?? 0))}>
-                                                {Number(activity.score ?? 0).toFixed(1)}/10
-                                            </span>
-                                        </button>
+                                            <div className="flex items-center gap-3">
+                                                <span className={cn("text-sm font-bold", getScoreColor(activity.score ?? 0))}>
+                                                    {Number(activity.score ?? 0).toFixed(1)}/10
+                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleShareSkillCard(activity.skill);
+                                                        }}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground hover:bg-background"
+                                                        title="Share skill card"
+                                                        aria-label="Share skill card"
+                                                    >
+                                                        <Share2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDownloadSkillCard(activity.skill, activity.id);
+                                                        }}
+                                                        disabled={downloadingSessionId === activity.id}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/60 text-muted-foreground hover:text-foreground hover:bg-background disabled:opacity-60"
+                                                        title="Download skill card"
+                                                        aria-label="Download skill card"
+                                                    >
+                                                        <Download className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))
                                 ) : (
                                     <div className="py-12 text-center px-4">

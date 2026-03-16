@@ -1,3 +1,24 @@
+import { generateSkillCertificate } from "../services/certificate.service";
+export async function getSkillCertificate(req: any, res: CombinedResponseType): Promise<void> {
+    try {
+        const skillId = req.params.skillId;
+        const userId = req.user?._id || req.user?.id;
+        const username = typeof req.query?.username === "string" ? req.query.username : undefined;
+
+        if (!skillId || (!userId && !username)) {
+            errorResponseWithStatusCode(res, "Missing skillId and user identity", HTTP_BAD_REQUEST_400);
+            return;
+        }
+
+        const imageBuffer = await generateSkillCertificate(skillId, userId, username);
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'attachment; filename=skillcraft-certificate.png');
+        res.send(imageBuffer as any);
+    } catch (error) {
+        catchResponse(res, error as { [key: string]: unknown, message: string }, 'Failed to generate skill certificate');
+        return;
+    }
+}
 import {
     TypedRequestWithBody,
     CombinedResponseType,

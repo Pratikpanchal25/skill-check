@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { BadgeCheck, ExternalLink, Github, Loader2, Mic, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type VerificationPayload = {
     profile: {
@@ -12,6 +13,7 @@ type VerificationPayload = {
         profileUrl: string;
     };
     skill: {
+        id: string | number;
         name: string;
         codeScore: number;
         voiceScore: number;
@@ -53,6 +55,56 @@ export const VerifySkill: React.FC = () => {
     const [verification, setVerification] = useState<VerificationPayload | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+    const [downloading, setDownloading] = useState(false);
+
+    const resolveSkillId = async (): Promise<string | number | null> => {
+        if (verification?.skill?.id) return verification.skill.id;
+
+        const name = verification?.skill?.name;
+        if (!name) return null;
+
+        const res = await api.get('/skills');
+        const skills = res.data?.data?.skills ?? [];
+        const match = skills.find((item: any) => String(item?.name || '').toLowerCase() === name.toLowerCase());
+        return match?._id ?? null;
+    };
+
+    // Fetch certificate image URL
+    const handleDownloadCertificate = async () => {
+        if (!verification) return;
+        setDownloading(true);
+        try {
+            const skillId = await resolveSkillId();
+            if (!skillId) {
+                toast.error('Could not find skill id for certificate download');
+                return;
+            }
+
+            // Fetch certificate PNG
+            const res = await api.get(`/skills/${skillId}/certificate`, {
+                responseType: 'blob',
+                params: {
+                    username: verification.profile.username,
+                },
+            });
+            const url = window.URL.createObjectURL(res.data);
+            setCertificateUrl(url);
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `SkillCraft-${verification.skill.name}-certificate.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success('Certificate downloaded');
+        } catch (err) {
+            setCertificateUrl(null);
+            toast.error('Unable to download certificate right now');
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchVerification = async () => {
@@ -103,6 +155,44 @@ export const VerifySkill: React.FC = () => {
                         Open SkillCraft
                     </Link>
                 </div>
+
+                {/* Certificate Card Actions */}
+                <div className="mb-8 flex flex-wrap items-center gap-4">
+                    <button
+                        className="rounded-xl border border-cyan-500 bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-600 disabled:opacity-60"
+                        onClick={handleDownloadCertificate}
+                        disabled={downloading}
+                    >
+                        {downloading ? 'Downloading...' : 'Download Skill Card'}
+                    </button>
+                    <a
+                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-blue-500 bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+                    >
+                        Share on LinkedIn
+                    </a>
+                    <a
+                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=Check%20out%20my%20SkillCraft%20verified%20skill%20card!`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-sky-500 bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600"
+                    >
+                        Share on Twitter
+                    </a>
+                </div>
+
+                {/* Certificate Card Image Preview */}
+                {certificateUrl && (
+                    <div className="mb-8 flex justify-center">
+                        <img
+                            src={certificateUrl}
+                            alt="SkillCraft Certificate Card"
+                            className="max-w-150 rounded-2xl border border-cyan-500 shadow-lg"
+                        />
+                    </div>
+                )}
 
                 <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
                     <section className={cn(panelClass, 'p-5')}>

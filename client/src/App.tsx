@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -23,9 +23,24 @@ import api from './lib/api';
 import { Toaster } from '@/components/ui/sonner';
 import { Loader2 } from 'lucide-react';
 
+function ProtectedRoute({ isAuthenticated, children }: { isAuthenticated: boolean; children: ReactElement }) {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function PublicAuthRoute({ isAuthenticated, children }: { isAuthenticated: boolean; children: ReactElement }) {
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+}
+
 function AppContent() {
   const dispatch = useDispatch();
   const token = useSelector((state: RootState) => state.auth.token);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [initializing, setInitializing] = useState(!!token);
 
   useEffect(() => {
@@ -64,14 +79,28 @@ function AppContent() {
     <Router>
       <Routes>
         {/* Auth routes */}
-        <Route path="/" element={<AuthLayout />}>
+        <Route
+          path="/"
+          element={
+            <PublicAuthRoute isAuthenticated={isAuthenticated}>
+              <AuthLayout />
+            </PublicAuthRoute>
+          }
+        >
           <Route index element={<Navigate to="/login" replace />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
         </Route>
 
         {/* Dashboard routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="skillcraft" element={<SkillCheck />} />
           <Route path="sessions" element={<AllSessions />} />
@@ -86,7 +115,7 @@ function AppContent() {
         <Route path="/verify/:username/:skill" element={<VerifySkill />} />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
       </Routes>
     </Router>
   );

@@ -1,5 +1,6 @@
 import { GithubProfile } from "../../models/GithubProfile";
 import { SkillProfile } from "../../models/SkillProfile";
+import { Skill } from "../../models/skill.model";
 import { SkillCheckSession } from "../../models/skill.check.session.model";
 import { Judgement } from "../../models/judgement.model";
 import {
@@ -409,6 +410,8 @@ export const getPublicVerification = async (username: string, skill: string) => 
     throw new Error("Requested skill verification not found");
   }
 
+  const canonicalSkill = await Skill.findOne({ name: new RegExp(`^${skillEntry.skill}$`, "i") }).lean();
+
   const relatedRepositories = (skillProfile.repoHighlights ?? []).filter((repository: any) =>
     (repository.technologies ?? []).some((technology: string) => normalizeSkill(technology) === normalizeSkill(skillEntry.skill)),
   );
@@ -426,6 +429,7 @@ export const getPublicVerification = async (username: string, skill: string) => 
       profileUrl: githubProfile.profileUrl,
     },
     skill: {
+      id: canonicalSkill?._id,
       name: skillEntry.skill,
       codeScore: skillEntry.codeScore,
       voiceScore: skillEntry.voiceScore,

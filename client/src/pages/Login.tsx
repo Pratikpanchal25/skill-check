@@ -39,7 +39,7 @@ export const Login: React.FC = () => {
             }
         } catch (err) {
             const error = err as AxiosError<{ message: string }>;
-            const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+            const message = error.response?.data?.message || 'Login failed. Please Try again after some time.';
             toast.error("Login Failed", {
                 description: message,
             });

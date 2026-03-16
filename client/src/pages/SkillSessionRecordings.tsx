@@ -844,7 +844,7 @@ export const SkillSessionRecordings: React.FC = () => {
 
     return (
         <div className="h-full min-h-0 overflow-hidden bg-transparent">
-            <div className="mx-auto flex h-full w-full max-w-screen-2xl flex-col px-4 py-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex h-full w-full max-w-[1760px] flex-col px-4 py-4 sm:px-6 lg:px-8">
                 <div className="mb-4 flex items-start justify-between gap-4">
                     <div className="space-y-3">
                         <Button
@@ -871,76 +871,127 @@ export const SkillSessionRecordings: React.FC = () => {
                 </div>
 
                 <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-                    <motion.section
-                        initial={{ opacity: 0, y: -12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35 }}
-                        className={cn(panelClass, 'p-4')}
-                    >
-                        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                                <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Skill Coverage</p>
-                                <h2 className="mt-1 text-lg font-semibold text-white">Concept tracker</h2>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-sm font-medium text-cyan-200">
-                                    {coveragePercent}% covered
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_360px] xl:grid-cols-[minmax(0,1.35fr)_420px] 2xl:grid-cols-[minmax(0,1.5fr)_460px]">
+                        <motion.section
+                            initial={{ opacity: 0, y: -12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35 }}
+                            className={cn(panelClass, 'p-4')}
+                        >
+                            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Skill Coverage</p>
+                                    <h2 className="mt-1 text-lg font-semibold text-white">Concept tracker</h2>
                                 </div>
-                                {historicalMissingConcepts.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {historicalMissingConcepts.map((concept) => (
-                                            <span key={concept} className="rounded-full border border-orange-500/16 bg-orange-500/8 px-2.5 py-1 text-xs text-orange-100">
-                                                {concept}
-                                            </span>
-                                        ))}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-sm font-medium text-cyan-200">
+                                        {coveragePercent}% covered
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mb-4 h-2 overflow-hidden rounded-full bg-black/20">
-                            <motion.div
-                                className="h-full rounded-full bg-linear-to-r from-emerald-400 via-cyan-400 to-violet-400"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${coveragePercent}%` }}
-                                transition={{ duration: 0.5, ease: 'easeOut' }}
-                            />
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-                            {coverage.map((concept, index) => (
-                                <motion.div
-                                    key={concept.label}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.04 }}
-                                    className={cn(
-                                        'rounded-2xl border p-3 transition-colors',
-                                        concept.detected
-                                            ? 'border-emerald-500/18 bg-emerald-500/8'
-                                            : 'border-white/5 bg-white/3'
+                                    {historicalMissingConcepts.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {historicalMissingConcepts.map((concept) => (
+                                                <span key={concept} className="rounded-full border border-orange-500/16 bg-orange-500/8 px-2.5 py-1 text-xs text-orange-100">
+                                                    {concept}
+                                                </span>
+                                            ))}
+                                        </div>
                                     )}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className={cn('mt-0.5 shrink-0', concept.detected ? 'text-emerald-300' : 'text-zinc-500')}>
-                                            {concept.detected ? <CheckCircle2 className="h-4.5 w-4.5" /> : <CircleDashed className="h-4.5 w-4.5" />}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium text-white">{concept.label}</p>
-                                                {concept.detected && concept.matchedAliases[0] && (
-                                                    <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-cyan-200">
-                                                        detected
-                                                    </span>
-                                                )}
+                                </div>
+                            </div>
+
+                            <div className="mb-3 h-2 overflow-hidden rounded-full bg-black/20">
+                                <motion.div
+                                    className="h-full rounded-full bg-linear-to-r from-emerald-400 via-cyan-400 to-violet-400"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${coveragePercent}%` }}
+                                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                                />
+                            </div>
+
+                            <div className="max-h-[220px] overflow-y-auto pr-1 sm:max-h-[260px] 2xl:max-h-[300px]">
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                                    {coverage.map((concept, index) => (
+                                        <motion.div
+                                            key={concept.label}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.04 }}
+                                            className={cn(
+                                                'rounded-2xl border p-3 transition-colors',
+                                                concept.detected
+                                                    ? 'border-emerald-500/18 bg-emerald-500/8'
+                                                    : 'border-white/5 bg-white/3'
+                                            )}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={cn('mt-0.5 shrink-0', concept.detected ? 'text-emerald-300' : 'text-zinc-500')}>
+                                                    {concept.detected ? <CheckCircle2 className="h-4.5 w-4.5" /> : <CircleDashed className="h-4.5 w-4.5" />}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm font-medium text-white">{concept.label}</p>
+                                                        {concept.detected && concept.matchedAliases[0] && (
+                                                            <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-cyan-200">
+                                                                detected
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-400">{concept.hint}</p>
+                                                </div>
                                             </div>
-                                            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-400">{concept.hint}</p>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.section>
+
+                        <motion.section
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35, delay: 0.05 }}
+                            className={cn(panelClass, 'p-4')}
+                        >
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">AI Analysis</p>
+                                    <h2 className="mt-1 text-lg font-semibold text-white">Voice metrics</h2>
+                                </div>
+                                <div className="rounded-full border border-violet-500/14 bg-violet-500/8 px-3 py-1 text-sm font-medium text-violet-200">
+                                    {voiceMetrics.qualityScore}/100
+                                </div>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+                                {voiceMetricsCards.map((metric) => (
+                                    <div key={metric.label} className={cn(mutedPanelClass, 'p-3 ring-1', statusStyles[metric.status].ring, statusStyles[metric.status].chip)}>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[11px] uppercase tracking-[0.18em] opacity-80">{metric.label}</p>
+                                                <p className="mt-1 text-lg font-semibold text-white">{metric.value}</p>
+                                            </div>
+                                            <Gauge className={cn('h-5 w-5', statusStyles[metric.status].text)} />
                                         </div>
+                                        <p className="mt-2 text-xs opacity-85">{metric.helper}</p>
                                     </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.section>
+                                ))}
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-3 gap-2">
+                                <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
+                                    <div className="text-xl font-semibold text-white">{pauseCount}</div>
+                                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Pauses</div>
+                                </div>
+                                <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
+                                    <div className="text-xl font-semibold text-white">{avgPauseDuration.toFixed(1)}s</div>
+                                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Avg pause</div>
+                                </div>
+                                <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
+                                    <div className={cn('text-xl font-semibold', fillerWordCount > 5 ? 'text-orange-300' : 'text-white')}>{fillerWordCount}</div>
+                                    <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Fillers</div>
+                                </div>
+                            </div>
+                        </motion.section>
+                    </div>
 
                     <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.28fr)_380px] 2xl:grid-cols-[minmax(0,1.38fr)_420px]">
                         <div className="space-y-4">
@@ -1087,52 +1138,6 @@ export const SkillSessionRecordings: React.FC = () => {
 
                             </motion.section>
 
-                            <motion.section
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.35, delay: 0.05 }}
-                                className={cn(panelClass, 'p-4')}
-                            >
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">AI Analysis</p>
-                                    <h2 className="mt-1 text-lg font-semibold text-white">Voice metrics</h2>
-                                </div>
-                                <div className="rounded-full border border-violet-500/14 bg-violet-500/8 px-3 py-1 text-sm font-medium text-violet-200">
-                                    {voiceMetrics.qualityScore}/100
-                                </div>
-                            </div>
-
-                            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-                                {voiceMetricsCards.map((metric) => (
-                                    <div key={metric.label} className={cn(mutedPanelClass, 'p-3 ring-1', statusStyles[metric.status].ring, statusStyles[metric.status].chip)}>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="text-[11px] uppercase tracking-[0.18em] opacity-80">{metric.label}</p>
-                                                <p className="mt-1 text-lg font-semibold text-white">{metric.value}</p>
-                                            </div>
-                                            <Gauge className={cn('h-5 w-5', statusStyles[metric.status].text)} />
-                                        </div>
-                                        <p className="mt-2 text-xs opacity-85">{metric.helper}</p>
-                                    </div>
-                                ))}
-                            </div>
-
-                                <div className="mt-4 grid grid-cols-3 gap-2">
-                                    <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
-                                        <div className="text-xl font-semibold text-white">{pauseCount}</div>
-                                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Pauses</div>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
-                                        <div className="text-xl font-semibold text-white">{avgPauseDuration.toFixed(1)}s</div>
-                                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Avg pause</div>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/5 bg-white/3 p-3 text-center">
-                                        <div className={cn('text-xl font-semibold', fillerWordCount > 5 ? 'text-orange-300' : 'text-white')}>{fillerWordCount}</div>
-                                        <div className="mt-1 text-[11px] uppercase tracking-[0.16em] text-zinc-500">Fillers</div>
-                                    </div>
-                                </div>
-                            </motion.section>
                         </div>
 
                         <div className="space-y-4">
