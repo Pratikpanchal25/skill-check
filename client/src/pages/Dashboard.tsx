@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BrainCircuit, Mic, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BrainCircuit, Github, Mic, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
 import { fetchDashboardData } from '@/store/slices/dataSlice';
@@ -157,6 +157,25 @@ export const Dashboard: React.FC = () => {
                             </p>
                             <Button onClick={() => navigate('/dashboard/skillcraft')} className="w-full cursor-pointer">
                                 Start Skillcraft
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </div>
+
+                        <div className="border border-border/50 rounded-xl bg-transparent p-6 shrink-0">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2">GitHub Verification</h3>
+                                    <p className="text-sm text-muted-foreground mb-5">
+                                        Connect GitHub, analyze your repositories, and combine code evidence with SkillCraft voice scores.
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400">
+                                    <BadgeCheck className="h-4 w-4" />
+                                </div>
+                            </div>
+                            <Button onClick={() => navigate('/dashboard/github-verification')} variant="outline" className="w-full cursor-pointer border-border/60 bg-transparent">
+                                <Github className="mr-2 h-4 w-4" />
+                                Open Verification Workspace
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>

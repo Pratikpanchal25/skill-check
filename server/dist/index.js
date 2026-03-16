@@ -11,6 +11,8 @@ const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const session_routes_1 = __importDefault(require("./routes/session.routes"));
 const skill_routes_1 = __importDefault(require("./routes/skill.routes"));
 const analytics_routes_1 = __importDefault(require("./routes/analytics.routes"));
+const github_routes_1 = __importDefault(require("./routes/github.routes"));
+const githubSyncJob_1 = require("./jobs/githubSyncJob");
 dotenv_1.default.config();
 (0, db_1.default)();
 const app = (0, express_1.default)();
@@ -23,9 +25,11 @@ app.use("/api/users", user_routes_1.default);
 app.use("/api/sessions", session_routes_1.default);
 app.use("/api/skills", skill_routes_1.default);
 app.use("/api/analytics", analytics_routes_1.default);
+app.use("/api/github", github_routes_1.default);
 app.get("/", (req, res) => {
     res.send("Skillcraft API is running");
 });
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+(0, githubSyncJob_1.startGithubSyncJob)();

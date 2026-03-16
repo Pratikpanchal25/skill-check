@@ -34,16 +34,29 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const UserController = __importStar(require("../controller/user.controller"));
 const auth_middleware_1 = require("../middleware/auth.middleware");
+const GithubController = __importStar(require("../controller/github.controller"));
+const requestLog = new Map();
+const WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS = 15;
+const githubRouteRateLimit = (req, res, next) => {
+    const key = String(req.user?._id ?? req.ip ?? "anonymous");
+    const now = Date.now();
+    const recentRequests = (requestLog.get(key) ?? []).filter((timestamp) => now - timestamp < WINDOW_MS);
+    if (recentRequests.length >= MAX_REQUESTS) {
+        return res.status(429).json({ success: 0, message: "Too many GitHub requests. Please try again shortly." });
+    }
+    recentRequests.push(now);
+    requestLog.set(key, recentRequests);
+    next();
+};
 const router = (0, express_1.Router)();
-router.post("/", UserController.createUser);
-router.post("/login", UserController.login);
-router.get("/me", auth_middleware_1.auth, UserController.getMe);
-router.patch("/me", auth_middleware_1.auth, UserController.updateMe);
-router.get("/me/dashboard", auth_middleware_1.auth, UserController.getDashboard);
-router.get("/me/overview", auth_middleware_1.auth, UserController.getOverview);
-router.get("/me/activity", auth_middleware_1.auth, UserController.getActivity);
-router.get("/me/activity/count", auth_middleware_1.auth, UserController.getActivityCount);
-router.delete("/me", auth_middleware_1.auth, UserController.deleteMe);
+router.get("/connect", auth_middleware_1.auth, githubRouteRateLimit, GithubController.connectGithub);
+router.post("/connect", auth_middleware_1.auth, githubRouteRateLimit, GithubController.connectGithub);
+router.get("/callback", GithubController.githubCallback);
+router.get("/profile", auth_middleware_1.auth, githubRouteRateLimit, GithubController.getGithubProfile);
+router.get("/repos", auth_middleware_1.auth, githubRouteRateLimit, GithubController.getGithubRepos);
+router.post("/analyze", auth_middleware_1.auth, githubRouteRateLimit, GithubController.analyzeGithub);
+router.get("/skills", auth_middleware_1.auth, githubRouteRateLimit, GithubController.getGithubSkills);
+router.get("/verify/:username/:skill", GithubController.getPublicVerification);
 exports.default = router;

@@ -96,7 +96,7 @@ export const Signup: React.FC = () => {
                         <div className="absolute inset-0 bg-primary/20 blur-xl" />
                     </div>
                     <span className="text-xl tracking-tight">
-                        <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
+                        <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-linear-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
                     </span>
                 </div>
 
@@ -153,7 +153,7 @@ export const Signup: React.FC = () => {
                     <div className="lg:hidden flex items-center gap-3 mb-10">
                         <img src="/logo.png" alt="Skillcraft" className="h-12 w-auto" style={{ filter: 'drop-shadow(0 0 5px rgba(139,92,246,0.45)) drop-shadow(0 0 10px rgba(34,211,238,0.2))' }} />
                         <span className="text-xl tracking-tight">
-                            <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-gradient-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
+                            <span className="font-medium text-foreground">Skill</span><span className="font-extrabold bg-linear-to-r from-violet-500 to-cyan-400 bg-clip-text text-transparent">craft</span>
                         </span>
                     </div>
 

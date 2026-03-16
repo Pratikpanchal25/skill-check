@@ -8,6 +8,8 @@ import { Dashboard } from './pages/Dashboard';
 import { SkillCheck } from './pages/SkillCheck';
 import SkillSessionRecordings from './pages/SkillSessionRecordings';
 import SkillSessionAttempts from './pages/SkillSessionAttempts';
+import GitHubVerification from './pages/GitHubVerification';
+import VerifySkill from './pages/VerifySkill';
 import { Profile } from './pages/Profile';
 import { ManageAccount } from './pages/ManageAccount';
 import { AllSessions } from './pages/AllSessions';
@@ -76,9 +78,12 @@ function AppContent() {
           <Route path="session/:id" element={<SkillSessionAttempts />} />
           <Route path="session/:id/record" element={<SkillSessionRecordings />} />
           <Route path="session/:id/attempts" element={<SkillSessionAttempts />} />
+          <Route path="github-verification" element={<GitHubVerification />} />
           <Route path="profile" element={<Profile />} />
           <Route path="manage-account" element={<ManageAccount />} />
         </Route>
+
+        <Route path="/verify/:username/:skill" element={<VerifySkill />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -39,6 +39,8 @@ exports.getMe = getMe;
 exports.updateMe = updateMe;
 exports.getOverview = getOverview;
 exports.getActivity = getActivity;
+exports.getActivityCount = getActivityCount;
+exports.getDashboard = getDashboard;
 exports.deleteMe = deleteMe;
 const index_1 = require("../types/index");
 const index_2 = require("../utils/index");
@@ -222,6 +224,46 @@ async function getActivity(req, res) {
     }
     catch (error) {
         (0, index_2.catchResponse)(res, error, 'Failed to retrieve user activity');
+        return;
+    }
+}
+async function getActivityCount(req, res) {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
+        const counts = await UserService.getUserActivityCount(userId);
+        const data = {
+            success: true,
+            counts
+        };
+        (0, index_2.successResponse)(res, data, 'User activity count retrieved successfully');
+        return;
+    }
+    catch (error) {
+        (0, index_2.catchResponse)(res, error, 'Failed to retrieve user activity count');
+        return;
+    }
+}
+async function getDashboard(req, res) {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            (0, index_2.errorResponseWithStatusCode)(res, 'Unauthorized', 401);
+            return;
+        }
+        const dashboard = await UserService.getUserDashboardData(userId);
+        const data = {
+            success: true,
+            ...dashboard
+        };
+        (0, index_2.successResponse)(res, data, 'User dashboard retrieved successfully');
+        return;
+    }
+    catch (error) {
+        (0, index_2.catchResponse)(res, error, 'Failed to retrieve user dashboard');
         return;
     }
 }
